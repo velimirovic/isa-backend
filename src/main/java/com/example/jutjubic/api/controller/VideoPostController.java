@@ -92,11 +92,11 @@ public class VideoPostController {
     }
 
     @GetMapping("/api/video-posts/{id}")
-    public ResponseEntity<VideoResponseDTO> getVideoPostById(@PathVariable("id") Long videoId) {
+    public ResponseEntity<VideoResponseDTO> getVideoPostById(@PathVariable("id") String videoDraftId) {
         try {
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(videoPostService.getVideoPost(videoId));
+                    .body(videoPostService.getVideoPost(videoDraftId));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
