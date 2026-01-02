@@ -120,13 +120,12 @@ public class VideoPostServiceImpl implements VideoPostService {
 
         videoPost.setStatus(VideoPostStatus.PUBLISHED);
         videoPost.setCreatedAt(LocalDateTime.now());
-        videoPost.setDraftId(null);
 
         return mapVideoPostDTO(videoPost);
     }
 
-    public VideoResponseDTO getVideoPost(long videoId) {
-        VideoPostEntity videoPost = videoPostRepository.findById(videoId);
+    public VideoResponseDTO getVideoPost(String videoDraftId) {
+        VideoPostEntity videoPost = videoPostRepository.findByDraftId(videoDraftId);
         if (videoPost == null)
             throw new RuntimeException("Post not found");
 
@@ -173,6 +172,7 @@ public class VideoPostServiceImpl implements VideoPostService {
         videoResponseDTO.setDescription(videoPost.getDescription());
         videoResponseDTO.setCreatedAt(videoPost.getCreatedAt());
         videoResponseDTO.setAuthorEmail(videoPost.getAuthor().getEmail());
+        videoResponseDTO.setAuthorUsername(videoPost.getAuthor().getUsername());
         videoResponseDTO.setStatus(videoPost.getStatus());
         videoResponseDTO.setDraftId(videoPost.getDraftId());
         videoResponseDTO.setViewCount(videoPost.getViewCount());

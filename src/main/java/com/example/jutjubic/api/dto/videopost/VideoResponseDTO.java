@@ -16,6 +16,7 @@ public class VideoResponseDTO {
     public String description;
     public LocalDateTime createdAt;
     public String authorEmail;
+    public String authorUsername;
     public VideoPostStatus status;
     public String draftId;
     public long viewCount;

@@ -57,7 +57,7 @@ public class SecurityConfig {
         // Dozvole pristupa
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()  // Login/registracija dostupni svima
-                .requestMatchers("/api/video-posts").permitAll()
+                .requestMatchers("/api/video-posts/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 .anyRequest().authenticated()  // Sve ostalo zahteva autentifikaciju
         );

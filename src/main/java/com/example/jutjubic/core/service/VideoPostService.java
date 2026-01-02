@@ -12,6 +12,6 @@ public interface VideoPostService {
     String uploadThumbnail(MultipartFile thumbnail, String draftId);
     String uploadPostDetails(String title, String description, String draftId);
     VideoResponseDTO publishVideoPost(String draftId);
-    VideoResponseDTO getVideoPost(long videoId);
+    VideoResponseDTO getVideoPost(String videoId);
     List<VideoResponseDTO> getAllVideoPosts(int page);
 }
