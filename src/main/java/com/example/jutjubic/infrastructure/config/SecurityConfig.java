@@ -7,6 +7,7 @@ import com.example.jutjubic.infrastructure.security.jwt.TokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -56,6 +57,8 @@ public class SecurityConfig {
         // Dozvole pristupa
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()  // Login/registracija dostupni svima
+                .requestMatchers("/api/video-posts").permitAll()
+                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 .anyRequest().authenticated()  // Sve ostalo zahteva autentifikaciju
         );
 
