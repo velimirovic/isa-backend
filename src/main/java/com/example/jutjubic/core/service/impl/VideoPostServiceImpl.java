@@ -69,7 +69,7 @@ public class VideoPostServiceImpl implements VideoPostService {
         return response;
     }
 
-    @Transactional (timeout=5)
+    @Transactional (timeout=300)
     public String uploadVideo(MultipartFile video, String draftId) {
         if (!storingService.isFileExtensionValid(video, "video"))
             throw new RuntimeException("File extension not valid");
@@ -87,7 +87,6 @@ public class VideoPostServiceImpl implements VideoPostService {
         String newVideoPath = null;
 
         try {
-            //videoPost.setVideoPath("temp");
             newVideoPath = storingService.storeFile(video, Optional.of(draftId));
             videoPost.setVideoPath(newVideoPath);
 
@@ -106,7 +105,7 @@ public class VideoPostServiceImpl implements VideoPostService {
         }
     }
 
-    @Transactional
+    @Transactional(timeout=20)
     public String uploadThumbnail(MultipartFile thumbnail, String draftId) {
         if (!storingService.isFileExtensionValid(thumbnail, "image"))
             throw new RuntimeException("File extension not valid");
@@ -125,6 +124,9 @@ public class VideoPostServiceImpl implements VideoPostService {
         try {
             newPath = storingService.storeFile(thumbnail, Optional.of(draftId));
             videoPost.setThumbnailPath(newPath);
+
+            videoPostRepository.save(videoPost);
+            videoPostRepository.flush();
 
             if (oldPath != null && !oldPath.isEmpty()) {
                 storingService.deleteFile(videoPost.getThumbnailPath());
