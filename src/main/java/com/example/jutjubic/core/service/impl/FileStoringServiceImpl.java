@@ -22,19 +22,20 @@ public class FileStoringServiceImpl implements FileStoringService {
             throw new RuntimeException("An error occured: file not valid");
 
         Path uploadDir = Paths.get(System.getProperty("user.dir"),"uploads");
+        String fileName = draftId.orElse("") + file.getOriginalFilename();
+        Path filePath = uploadDir.resolve(fileName);
 
         try {
             if (!Files.exists(uploadDir))
                 Files.createDirectories(uploadDir);
 
-            String fileName = draftId.orElse("") + file.getOriginalFilename();
-            Path filePath = uploadDir.resolve(fileName);
-            FileOutputStream fout = new FileOutputStream(filePath.toFile());
-            fout.write(file.getBytes());
-            fout.close();
+            try (FileOutputStream fout = new FileOutputStream(filePath.toFile())) {
+                fout.write(file.getBytes());
+            }
 
             return fileName;
         } catch (Exception e) {
+            deleteFile(filePath.toString());
             throw new RuntimeException("Error in uploading file: " + e);
         }
     }

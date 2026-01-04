@@ -69,20 +69,41 @@ public class VideoPostServiceImpl implements VideoPostService {
         return response;
     }
 
-    @Transactional
+    @Transactional (timeout=5)
     public String uploadVideo(MultipartFile video, String draftId) {
         if (!storingService.isFileExtensionValid(video, "video"))
             throw new RuntimeException("File extension not valid");
 
         VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
-
-        if (videoPost.getVideoPath() != null && !videoPost.getVideoPath().isEmpty()) {
-            storingService.deleteFile(videoPost.getVideoPath());
+        if (videoPost == null)
+            throw new RuntimeException("Draft not found");
+        else {
+            if (videoPost.getStatus() == VideoPostStatus.PUBLISHED) {
+                throw new RuntimeException("Post already published");
+            }
         }
 
-        String videoPath = storingService.storeFile(video, Optional.of(draftId));
-        videoPost.setVideoPath(videoPath);
-        return videoPath;
+        String oldPath = videoPost.getVideoPath();
+        String newVideoPath = null;
+
+        try {
+            //videoPost.setVideoPath("temp");
+            newVideoPath = storingService.storeFile(video, Optional.of(draftId));
+            videoPost.setVideoPath(newVideoPath);
+
+            videoPostRepository.save(videoPost);
+            videoPostRepository.flush();
+
+            if (oldPath != null && !oldPath.isEmpty()) {
+                storingService.deleteFile(oldPath);
+            }
+            return newVideoPath;
+        } catch (Exception e) {
+            if (newVideoPath != null) {
+                storingService.deleteFile(newVideoPath);
+            }
+            throw new RuntimeException("Upload failed and rolled back: " + e);
+        }
     }
 
     @Transactional
@@ -91,19 +112,37 @@ public class VideoPostServiceImpl implements VideoPostService {
             throw new RuntimeException("File extension not valid");
 
         VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
-
-        if (videoPost.getThumbnailPath() != null && !videoPost.getThumbnailPath().isEmpty()) {
-            storingService.deleteFile(videoPost.getThumbnailPath());
+        if (videoPost == null)
+            throw new RuntimeException("Draft not found");
+        else {
+            if (videoPost.getStatus() == VideoPostStatus.PUBLISHED)
+                throw new RuntimeException("Post already published");
         }
 
-        String thumbnailPath = storingService.storeFile(thumbnail, Optional.of(draftId));
-        videoPost.setThumbnailPath(thumbnailPath);
-        return thumbnailPath;
+        String oldPath = videoPost.getThumbnailPath();
+        String newPath = null;
+
+        try {
+            newPath = storingService.storeFile(thumbnail, Optional.of(draftId));
+            videoPost.setThumbnailPath(newPath);
+
+            if (oldPath != null && !oldPath.isEmpty()) {
+                storingService.deleteFile(videoPost.getThumbnailPath());
+            }
+            return newPath;
+        } catch (Exception e) {
+            if (newPath != null)
+                storingService.deleteFile(newPath);
+            throw new RuntimeException("Upload failed and rolled back: " + e);
+        }
     }
 
     @Transactional
     public String uploadPostDetails(String title, String description, String draftId) {
         VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
+        if (videoPost.getStatus() == VideoPostStatus.PUBLISHED)
+            throw new RuntimeException("Post already published");
+
         videoPost.setTitle(title);
         videoPost.setDescription(description);
 
@@ -114,6 +153,9 @@ public class VideoPostServiceImpl implements VideoPostService {
     public VideoResponseDTO publishVideoPost(String draftId) {
         VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
         var result = ValidateVideoPost(videoPost);
+
+        if (videoPost.getStatus() == null || videoPost.getStatus() == VideoPostStatus.PUBLISHED)
+            throw new RuntimeException("Post already published");
 
         if (!result.isEmpty())
             throw new RuntimeException(result);
@@ -137,19 +179,15 @@ public class VideoPostServiceImpl implements VideoPostService {
     }
 
     public List<VideoResponseDTO> getAllVideoPosts(int page) {
-        try {
-            Pageable pageable = PageRequest.of(page, 6);
-            Page<VideoPostEntity> allVideoPosts = videoPostRepository.findAllPublished(pageable);
-            List<VideoResponseDTO> posts = new ArrayList<>();
+        Pageable pageable = PageRequest.of(page, 6);
+        Page<VideoPostEntity> allVideoPosts = videoPostRepository.findAllPublished(pageable);
+        List<VideoResponseDTO> posts = new ArrayList<>();
 
-            for (VideoPostEntity videoPost : allVideoPosts) {
-                posts.add(mapVideoPostDTO(videoPost));
-            }
-
-            return posts;
-        } catch (Exception e) {
-            throw new RuntimeException("An error occurred: " + e);
+        for (VideoPostEntity videoPost : allVideoPosts) {
+            posts.add(mapVideoPostDTO(videoPost));
         }
+
+        return posts;
     }
 
     private String ValidateVideoPost(VideoPostEntity videoPost) {
