@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -20,4 +21,5 @@ public class VideoResponseDTO {
     public VideoPostStatus status;
     public String draftId;
     public long viewCount;
+    public List<String> tagNames;
 }

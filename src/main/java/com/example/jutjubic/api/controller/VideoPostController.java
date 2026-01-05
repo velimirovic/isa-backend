@@ -1,5 +1,6 @@
 package com.example.jutjubic.api.controller;
 
+import com.example.jutjubic.api.dto.videopost.PostDetailsDTO;
 import com.example.jutjubic.api.dto.videopost.VideoPostDraftDTO;
 import com.example.jutjubic.api.dto.videopost.VideoResponseDTO;
 import com.example.jutjubic.core.service.VideoPostService;
@@ -67,13 +68,20 @@ public class VideoPostController {
 
     @PatchMapping("/api/video-posts/{id}")
     public ResponseEntity<String> uploadPostDetails(
-            @RequestParam("title") String title,
-            @RequestParam("description") String description,
-            @PathVariable("id") String draftId) {
+//            @RequestParam("title") String title,
+//            @RequestParam("description") String description,
+//            @RequestParam("tagNames") List<String> tagNames,
+            @PathVariable("id") String draftId,
+            @RequestBody PostDetailsDTO detailsDTO
+            ) {
         try {
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(videoPostService.uploadPostDetails(title, description, draftId));
+                    .body(videoPostService.uploadPostDetails(
+                            detailsDTO.getTitle(),
+                            detailsDTO.getDescription(),
+                            detailsDTO.getTags(),
+                            draftId));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)

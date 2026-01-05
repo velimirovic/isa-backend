@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name="videos")
@@ -33,7 +35,13 @@ public class VideoPostEntity {
     @Column(name="thumbnail_path")
     private String thumbnailPath;
 
-    // TODO: implement tags
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name="video_post_tags",
+            joinColumns = @JoinColumn(name="video_id"),
+            inverseJoinColumns = @JoinColumn(name="tag_id")
+    )
+    private Set<TagEntity> tags = new HashSet<>();
 
     @Column(name="created_at")
     private LocalDateTime createdAt;
