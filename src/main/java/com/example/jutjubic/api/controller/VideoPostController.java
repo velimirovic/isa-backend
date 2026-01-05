@@ -1,13 +1,18 @@
 package com.example.jutjubic.api.controller;
 
+import com.example.jutjubic.api.dto.videopost.PostDetailsDTO;
 import com.example.jutjubic.api.dto.videopost.VideoPostDraftDTO;
 import com.example.jutjubic.api.dto.videopost.VideoResponseDTO;
 import com.example.jutjubic.core.service.VideoPostService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.file.Files;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -63,13 +68,20 @@ public class VideoPostController {
 
     @PatchMapping("/api/video-posts/{id}")
     public ResponseEntity<String> uploadPostDetails(
-            @RequestParam("title") String title,
-            @RequestParam("description") String description,
-            @PathVariable("id") String draftId) {
+//            @RequestParam("title") String title,
+//            @RequestParam("description") String description,
+//            @RequestParam("tagNames") List<String> tagNames,
+            @PathVariable("id") String draftId,
+            @RequestBody PostDetailsDTO detailsDTO
+            ) {
         try {
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(videoPostService.uploadPostDetails(title, description, draftId));
+                    .body(videoPostService.uploadPostDetails(
+                            detailsDTO.getTitle(),
+                            detailsDTO.getDescription(),
+                            detailsDTO.getTags(),
+                            draftId));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -111,6 +123,27 @@ public class VideoPostController {
                     .status(HttpStatus.OK)
                     .body(videoPostService.getAllVideoPosts(page));
         } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(null);
+        }
+    }
+
+    @GetMapping("/api/video-posts/{id}/thumbnail")
+    public ResponseEntity<Resource> getThumbnailByDraftId(@PathVariable("id") String draftId) {
+        try {
+            Resource thumbnail = videoPostService.getThumbnailByDraftId(draftId);
+
+            String contentType = Files.probeContentType(thumbnail.getFile().toPath());
+            if (contentType == null) {
+                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            }
+
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .body(thumbnail);
+        } catch(Exception e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body(null);

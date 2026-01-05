@@ -5,10 +5,15 @@ import com.example.jutjubic.api.dto.videopost.VideoResponseDTO;
 import com.example.jutjubic.core.service.FileStoringService;
 import com.example.jutjubic.core.service.VideoPostService;
 import com.example.jutjubic.domain.videopost.VideoPostStatus;
+import com.example.jutjubic.infrastructure.persistence.entity.TagEntity;
 import com.example.jutjubic.infrastructure.persistence.entity.UserEntity;
 import com.example.jutjubic.infrastructure.persistence.entity.VideoPostEntity;
+import com.example.jutjubic.infrastructure.persistence.repository.JpaTagRepository;
 import com.example.jutjubic.infrastructure.persistence.repository.JpaUserRepository;
 import com.example.jutjubic.infrastructure.persistence.repository.JpaVideoPostRepository;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,10 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -29,11 +32,20 @@ public class VideoPostServiceImpl implements VideoPostService {
     private final JpaVideoPostRepository videoPostRepository;
     private final JpaUserRepository userRepository;
     private final FileStoringService storingService;
+    private final CacheManager cacheManager;
+    private final JpaTagRepository tagRepository;
 
-    public VideoPostServiceImpl(JpaVideoPostRepository VideoPostRepository, FileStoringService storingService, JpaUserRepository userRepository) {
+    public VideoPostServiceImpl(
+            JpaVideoPostRepository VideoPostRepository,
+            FileStoringService storingService,
+            JpaUserRepository userRepository,
+            CacheManager cacheManager,
+            JpaTagRepository tagRepository) {
         this.videoPostRepository = VideoPostRepository;
         this.storingService = storingService;
         this.userRepository = userRepository;
+        this.cacheManager = cacheManager;
+        this.tagRepository = tagRepository;
     }
 
     @Transactional
@@ -69,43 +81,85 @@ public class VideoPostServiceImpl implements VideoPostService {
         return response;
     }
 
-    @Transactional
+    @Transactional (timeout=300)
     public String uploadVideo(MultipartFile video, String draftId) {
         if (!storingService.isFileExtensionValid(video, "video"))
             throw new RuntimeException("File extension not valid");
 
         VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
-
-        if (videoPost.getVideoPath() != null && !videoPost.getVideoPath().isEmpty()) {
-            storingService.deleteFile(videoPost.getVideoPath());
+        if (videoPost == null)
+            throw new RuntimeException("Draft not found");
+        else {
+            if (videoPost.getStatus() == VideoPostStatus.PUBLISHED) {
+                throw new RuntimeException("Post already published");
+            }
         }
 
-        String videoPath = storingService.storeFile(video, Optional.of(draftId));
-        videoPost.setVideoPath(videoPath);
-        return videoPath;
+        String oldPath = videoPost.getVideoPath();
+        String newVideoPath = null;
+
+        try {
+            newVideoPath = storingService.storeFile(video, Optional.of(draftId));
+            videoPost.setVideoPath(newVideoPath);
+
+            videoPostRepository.save(videoPost);
+            videoPostRepository.flush();
+
+            if (oldPath != null && !oldPath.isEmpty()) {
+                storingService.deleteFile(oldPath);
+            }
+            return newVideoPath;
+        } catch (Exception e) {
+            if (newVideoPath != null) {
+                storingService.deleteFile(newVideoPath);
+            }
+            throw new RuntimeException("Upload failed and rolled back: " + e);
+        }
     }
 
-    @Transactional
+    @Transactional(timeout=20)
     public String uploadThumbnail(MultipartFile thumbnail, String draftId) {
         if (!storingService.isFileExtensionValid(thumbnail, "image"))
             throw new RuntimeException("File extension not valid");
 
         VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
-
-        if (videoPost.getThumbnailPath() != null && !videoPost.getThumbnailPath().isEmpty()) {
-            storingService.deleteFile(videoPost.getThumbnailPath());
+        if (videoPost == null)
+            throw new RuntimeException("Draft not found");
+        else {
+            if (videoPost.getStatus() == VideoPostStatus.PUBLISHED)
+                throw new RuntimeException("Post already published");
         }
 
-        String thumbnailPath = storingService.storeFile(thumbnail, Optional.of(draftId));
-        videoPost.setThumbnailPath(thumbnailPath);
-        return thumbnailPath;
+        String oldPath = videoPost.getThumbnailPath();
+        String newPath = null;
+
+        try {
+            newPath = storingService.storeFile(thumbnail, Optional.of(draftId));
+            videoPost.setThumbnailPath(newPath);
+
+            videoPostRepository.save(videoPost);
+            videoPostRepository.flush();
+
+            if (oldPath != null && !oldPath.isEmpty()) {
+                storingService.deleteFile(videoPost.getThumbnailPath());
+            }
+            return newPath;
+        } catch (Exception e) {
+            if (newPath != null)
+                storingService.deleteFile(newPath);
+            throw new RuntimeException("Upload failed and rolled back: " + e);
+        }
     }
 
     @Transactional
-    public String uploadPostDetails(String title, String description, String draftId) {
+    public String uploadPostDetails(String title, String description, List<String> tagNames, String draftId) {
         VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
+        if (videoPost.getStatus() == VideoPostStatus.PUBLISHED)
+            throw new RuntimeException("Post already published");
+
         videoPost.setTitle(title);
         videoPost.setDescription(description);
+        addTagsToVideo(draftId, tagNames);
 
         return "success";
     }
@@ -114,6 +168,9 @@ public class VideoPostServiceImpl implements VideoPostService {
     public VideoResponseDTO publishVideoPost(String draftId) {
         VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
         var result = ValidateVideoPost(videoPost);
+
+        if (videoPost.getStatus() == null || videoPost.getStatus() == VideoPostStatus.PUBLISHED)
+            throw new RuntimeException("Post already published");
 
         if (!result.isEmpty())
             throw new RuntimeException(result);
@@ -137,19 +194,24 @@ public class VideoPostServiceImpl implements VideoPostService {
     }
 
     public List<VideoResponseDTO> getAllVideoPosts(int page) {
-        try {
-            Pageable pageable = PageRequest.of(page, 6);
-            Page<VideoPostEntity> allVideoPosts = videoPostRepository.findAllPublished(pageable);
-            List<VideoResponseDTO> posts = new ArrayList<>();
+        Pageable pageable = PageRequest.of(page, 6);
+        Page<VideoPostEntity> allVideoPosts = videoPostRepository.findAllPublished(pageable);
+        List<VideoResponseDTO> posts = new ArrayList<>();
 
-            for (VideoPostEntity videoPost : allVideoPosts) {
-                posts.add(mapVideoPostDTO(videoPost));
-            }
-
-            return posts;
-        } catch (Exception e) {
-            throw new RuntimeException("An error occurred: " + e);
+        for (VideoPostEntity videoPost : allVideoPosts) {
+            posts.add(mapVideoPostDTO(videoPost));
         }
+
+        return posts;
+    }
+
+    @Cacheable("thumbnails")
+    public Resource getThumbnailByDraftId(String draftId) {
+        VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
+        if (videoPost == null)
+            throw new RuntimeException("Post not found");
+
+        return storingService.loadFile(videoPost.getThumbnailPath());
     }
 
     private String ValidateVideoPost(VideoPostEntity videoPost) {
@@ -162,6 +224,31 @@ public class VideoPostServiceImpl implements VideoPostService {
 
         return "";
     }
+
+
+    @Transactional
+    public void addTagsToVideo(String draftId, List<String> tagNames) {
+        VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
+        if (videoPost == null)
+            throw new RuntimeException("Post not found");
+
+        Set<TagEntity> tags = tagNames.stream()
+            .map(name -> name.toLowerCase().trim())
+            .distinct()
+            .map(cleanName -> {
+              TagEntity existingTag = tagRepository.findByName(cleanName);
+              if (existingTag != null)
+                  return existingTag;
+
+              TagEntity newTag = new TagEntity();
+              newTag.setName(cleanName);
+              return tagRepository.save(newTag);
+            }).collect(Collectors.toSet());
+
+        videoPost.setTags(tags);
+    }
+
+
 
     private VideoResponseDTO mapVideoPostDTO (VideoPostEntity videoPost) {
         VideoResponseDTO videoResponseDTO = new VideoResponseDTO();
@@ -176,6 +263,11 @@ public class VideoPostServiceImpl implements VideoPostService {
         videoResponseDTO.setStatus(videoPost.getStatus());
         videoResponseDTO.setDraftId(videoPost.getDraftId());
         videoResponseDTO.setViewCount(videoPost.getViewCount());
+
+        List<String> tagNames = videoPost.getTags().stream()
+                .map(TagEntity::getName)
+                .toList();
+        videoResponseDTO.setTagNames(tagNames);
 
         return videoResponseDTO;
     }

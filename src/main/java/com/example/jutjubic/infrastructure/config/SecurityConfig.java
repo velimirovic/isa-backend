@@ -59,6 +59,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()  // Login/registracija dostupni svima
                 .requestMatchers("/api/video-posts/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/video-posts/{id}/thumbnail").permitAll()
                 .anyRequest().authenticated()  // Sve ostalo zahteva autentifikaciju
         );
 

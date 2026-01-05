@@ -3,10 +3,13 @@ package com.example.jutjubic.core.service.impl;
 import com.example.jutjubic.core.service.FileStoringService;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileOutputStream;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,19 +25,20 @@ public class FileStoringServiceImpl implements FileStoringService {
             throw new RuntimeException("An error occured: file not valid");
 
         Path uploadDir = Paths.get(System.getProperty("user.dir"),"uploads");
+        String fileName = draftId.orElse("") + file.getOriginalFilename();
+        Path filePath = uploadDir.resolve(fileName);
 
         try {
             if (!Files.exists(uploadDir))
                 Files.createDirectories(uploadDir);
 
-            String fileName = draftId.orElse("") + file.getOriginalFilename();
-            Path filePath = uploadDir.resolve(fileName);
-            FileOutputStream fout = new FileOutputStream(filePath.toFile());
-            fout.write(file.getBytes());
-            fout.close();
+            try (FileOutputStream fout = new FileOutputStream(filePath.toFile())) {
+                fout.write(file.getBytes());
+            }
 
             return fileName;
         } catch (Exception e) {
+            deleteFile(filePath.toString());
             throw new RuntimeException("Error in uploading file: " + e);
         }
     }
@@ -65,6 +69,21 @@ public class FileStoringServiceImpl implements FileStoringService {
             return Files.deleteIfExists(Paths.get(System.getProperty("user.dir"), "uploads").resolve(fileName));
         } catch (Exception e) {
             throw new RuntimeException("File deleting error: " + e);
+        }
+    }
+
+    public Resource loadFile(String fileName) {
+        try {
+            Path uploadDir = Paths.get(System.getProperty("user.dir"),"uploads");
+            Path filePath = uploadDir.resolve(fileName);
+            Resource resource = new UrlResource(filePath.toUri());
+            if (resource.exists() || resource.isReadable()) {
+                return resource;
+            } else {
+                throw new RuntimeException("File not found: " + fileName);
+            }
+        } catch (MalformedURLException  e) {
+            throw new RuntimeException("Could not read file: " + fileName, e);
         }
     }
 }
