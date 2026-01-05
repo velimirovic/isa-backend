@@ -9,6 +9,10 @@ import com.example.jutjubic.infrastructure.persistence.entity.UserEntity;
 import com.example.jutjubic.infrastructure.persistence.entity.VideoPostEntity;
 import com.example.jutjubic.infrastructure.persistence.repository.JpaUserRepository;
 import com.example.jutjubic.infrastructure.persistence.repository.JpaVideoPostRepository;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,11 +33,17 @@ public class VideoPostServiceImpl implements VideoPostService {
     private final JpaVideoPostRepository videoPostRepository;
     private final JpaUserRepository userRepository;
     private final FileStoringService storingService;
+    private final CacheManager cacheManager;
 
-    public VideoPostServiceImpl(JpaVideoPostRepository VideoPostRepository, FileStoringService storingService, JpaUserRepository userRepository) {
+    public VideoPostServiceImpl(
+            JpaVideoPostRepository VideoPostRepository,
+            FileStoringService storingService,
+            JpaUserRepository userRepository,
+            CacheManager cacheManager) {
         this.videoPostRepository = VideoPostRepository;
         this.storingService = storingService;
         this.userRepository = userRepository;
+        this.cacheManager = cacheManager;
     }
 
     @Transactional
@@ -190,6 +200,15 @@ public class VideoPostServiceImpl implements VideoPostService {
         }
 
         return posts;
+    }
+
+    @Cacheable("thumbnails")
+    public Resource getThumbnailByDraftId(String draftId) {
+        VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
+        if (videoPost == null)
+            throw new RuntimeException("Post not found");
+
+        return storingService.loadFile(videoPost.getThumbnailPath());
     }
 
     private String ValidateVideoPost(VideoPostEntity videoPost) {
