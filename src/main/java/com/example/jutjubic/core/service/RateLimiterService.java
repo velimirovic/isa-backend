@@ -1,107 +1,96 @@
 package com.example.jutjubic.core.service;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-//Ogranicavanje pokusaja logovanja
 @Service
 public class RateLimiterService {
 
-    //Broj pokusaja i vreme prvog
-    private static class LoginAttempt {
-        int count;
-        LocalDateTime firstAttempt;
+    @Autowired
+    private CacheManager cacheManager;
 
-        public LoginAttempt() {
-            this.count = 1;
-            this.firstAttempt = LocalDateTime.now();
-        }
-    }
+    private static final int MAX_ATTEMPTS = 5;
+    private static final int TIME_WINDOW_MINUTES = 1;
+    private static final String CACHE_NAME = "loginAttempts";
 
-    // Mapa koja cuva pokusaje po IP adresi
-    // Key = IP adresa, Value = LoginAttempt objekat
-    private final Map<String, LoginAttempt> attemptCache = new ConcurrentHashMap<>();
-
-    private static final int MAX_ATTEMPTS = 5;  // Maksimalno pokusaja
-    private static final int TIME_WINDOW_MINUTES = 1;  // U roku od 1 minuta
-
-    // Proverava ip adresu
     public boolean isAllowed(String ipAddress) {
-        // Ocisti stare pokusaje
-        cleanupExpiredAttempts();
+        Cache cache = cacheManager.getCache(CACHE_NAME);
+        if (cache == null) return true;
 
-        // Proveri da li postoje pokusaji za ovu IP adresu
-        LoginAttempt attempt = attemptCache.get(ipAddress);
+        LoginAttemptCache attempt = cache.get(ipAddress, LoginAttemptCache.class);
 
         if (attempt == null) {
             return true;
         }
 
-        // Proveri da li je prosao 1 minut
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiryTime = attempt.firstAttempt.plusMinutes(TIME_WINDOW_MINUTES);
+        LocalDateTime expiryTime = attempt.getFirstAttempt().plusMinutes(TIME_WINDOW_MINUTES);
 
-        // Ako je isteklo vreme zaboravi ip adresu
         if (now.isAfter(expiryTime)) {
-            attemptCache.remove(ipAddress);
+            cache.evict(ipAddress);
             return true;
         }
 
-        // Ako je prekoracio limit
-        if (attempt.count >= MAX_ATTEMPTS) {
-            return false;
-        }
-
-        return true;
+        return attempt.getCount() < MAX_ATTEMPTS;
     }
 
-    // Registruj pokusaj logovanja
     public void registerAttempt(String ipAddress) {
-        attemptCache.compute(ipAddress, (key, attempt) -> {
-            if (attempt == null) {
-                // Prvi pokusaj za ovaj ip
-                return new LoginAttempt();
-            }
-            else {
-                // Brojac
-                attempt.count++;
-                return attempt;
-            }
-        });
+        Cache cache = cacheManager.getCache(CACHE_NAME);
+        if (cache == null) return;
+
+        LoginAttemptCache attempt = cache.get(ipAddress, LoginAttemptCache.class);
+
+        if (attempt == null) {
+            cache.put(ipAddress, new LoginAttemptCache(1, LocalDateTime.now()));
+        } else {
+            attempt.setCount(attempt.getCount() + 1);
+            cache.put(ipAddress, attempt);
+        }
     }
 
-    // Kad se uspesno loguje brise pokusaje
     public void resetAttempts(String ipAddress) {
-        attemptCache.remove(ipAddress);
+        Cache cache = cacheManager.getCache(CACHE_NAME);
+        if (cache != null) {
+            cache.evict(ipAddress);
+        }
     }
 
-    // Obrisi pokusaje ako je prosao minut
-    private void cleanupExpiredAttempts() {
-        LocalDateTime now = LocalDateTime.now();
-        attemptCache.entrySet().removeIf(entry -> {
-            LocalDateTime expiryTime = entry.getValue().firstAttempt.plusMinutes(TIME_WINDOW_MINUTES);
-            return now.isAfter(expiryTime);
-        });
-    }
-
-    // Koliko je ostalo pokusaja
     public int getRemainingAttempts(String ipAddress) {
-        LoginAttempt attempt = attemptCache.get(ipAddress);
+        Cache cache = cacheManager.getCache(CACHE_NAME);
+        if (cache == null) return MAX_ATTEMPTS;
+
+        LoginAttemptCache attempt = cache.get(ipAddress, LoginAttemptCache.class);
+
         if (attempt == null) {
             return MAX_ATTEMPTS;
         }
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiryTime = attempt.firstAttempt.plusMinutes(TIME_WINDOW_MINUTES);
+        LocalDateTime expiryTime = attempt.getFirstAttempt().plusMinutes(TIME_WINDOW_MINUTES);
 
         if (now.isAfter(expiryTime)) {
-            // Istekao vremenski period
             return MAX_ATTEMPTS;
         }
 
-        return Math.max(0, MAX_ATTEMPTS - attempt.count);
+        return Math.max(0, MAX_ATTEMPTS - attempt.getCount());
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class LoginAttemptCache implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private int count;
+        private LocalDateTime firstAttempt;
     }
 }
