@@ -20,6 +20,9 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
                          AuthenticationException authException) throws IOException, ServletException {
 
         // 401
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
+        response.sendError(
+                HttpServletResponse.SC_UNAUTHORIZED,
+                "Morate se prijaviti kako biste pristupili ovoj funkcionalnosti."
+        );
     }
 }
