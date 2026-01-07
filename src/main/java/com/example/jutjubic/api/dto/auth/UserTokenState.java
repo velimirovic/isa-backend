@@ -1,4 +1,4 @@
-package com.example.jutjubic.api.dto;
+package com.example.jutjubic.api.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package com.example.jutjubic.infrastructure.persistence.entity;
+package com.example.jutjubic.infrastructure.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
