@@ -1,4 +1,4 @@
-package com.example.jutjubic.api.dto;
+package com.example.jutjubic.api.dto.comment;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

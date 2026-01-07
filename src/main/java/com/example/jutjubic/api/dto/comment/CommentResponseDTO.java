@@ -1,6 +1,6 @@
-package com.example.jutjubic.api.dto;
+package com.example.jutjubic.api.dto.comment;
 
-import com.example.jutjubic.infrastructure.persistence.entity.CommentEntity;
+import com.example.jutjubic.infrastructure.entity.CommentEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

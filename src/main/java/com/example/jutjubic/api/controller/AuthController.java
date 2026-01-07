@@ -1,10 +1,10 @@
 package com.example.jutjubic.api.controller;
 
-import com.example.jutjubic.api.dto.LoginRequest;
-import com.example.jutjubic.api.dto.RegistrationRequest;
-import com.example.jutjubic.api.dto.UserTokenState;
-import com.example.jutjubic.core.service.AuthService;
-import com.example.jutjubic.core.service.RateLimiterService;
+import com.example.jutjubic.api.dto.auth.LoginRequest;
+import com.example.jutjubic.api.dto.auth.RegistrationRequest;
+import com.example.jutjubic.api.dto.auth.UserTokenState;
+import com.example.jutjubic.core.service.impl.AuthServiceImpl;
+import com.example.jutjubic.core.service.impl.RateLimiterServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +20,10 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     @Autowired
-    private AuthService authService;
+    private AuthServiceImpl authService;
 
     @Autowired
-    private RateLimiterService rateLimiterService;
+    private RateLimiterServiceImpl rateLimiterService;
 
     /*
      Registracija novog korisnika
