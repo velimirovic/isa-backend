@@ -1,14 +1,14 @@
 package com.example.jutjubic.core.service.impl;
 
-import com.example.jutjubic.api.dto.CommentResponseDTO;
-import com.example.jutjubic.api.dto.CreateCommentDTO;
+import com.example.jutjubic.api.dto.comment.CommentResponseDTO;
+import com.example.jutjubic.api.dto.comment.CreateCommentDTO;
 import com.example.jutjubic.core.service.CommentService;
-import com.example.jutjubic.infrastructure.persistence.entity.CommentEntity;
-import com.example.jutjubic.infrastructure.persistence.entity.UserEntity;
-import com.example.jutjubic.infrastructure.persistence.entity.VideoPostEntity;
-import com.example.jutjubic.infrastructure.persistence.repository.JpaCommentRepository;
-import com.example.jutjubic.infrastructure.persistence.repository.JpaUserRepository;
-import com.example.jutjubic.infrastructure.persistence.repository.JpaVideoPostRepository;
+import com.example.jutjubic.infrastructure.entity.CommentEntity;
+import com.example.jutjubic.infrastructure.entity.UserEntity;
+import com.example.jutjubic.infrastructure.entity.VideoPostEntity;
+import com.example.jutjubic.infrastructure.repository.JpaCommentRepository;
+import com.example.jutjubic.infrastructure.repository.JpaUserRepository;
+import com.example.jutjubic.infrastructure.repository.JpaVideoPostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;

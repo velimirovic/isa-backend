@@ -1,7 +1,7 @@
 package com.example.jutjubic.core.service;
 
-import com.example.jutjubic.api.dto.CommentResponseDTO;
-import com.example.jutjubic.api.dto.CreateCommentDTO;
+import com.example.jutjubic.api.dto.comment.CommentResponseDTO;
+import com.example.jutjubic.api.dto.comment.CreateCommentDTO;
 import org.springframework.data.domain.Page;
 
 //Servis za upravljanje komentarima

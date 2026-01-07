@@ -1,6 +1,6 @@
 package com.example.jutjubic.api.controller;
 
-import com.example.jutjubic.api.dto.UserProfileDTO;
+import com.example.jutjubic.api.dto.user.UserProfileDTO;
 import com.example.jutjubic.core.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

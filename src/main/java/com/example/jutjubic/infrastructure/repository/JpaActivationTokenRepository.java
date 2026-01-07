@@ -1,7 +1,7 @@
-package com.example.jutjubic.infrastructure.persistence.repository;
+package com.example.jutjubic.infrastructure.repository;
 
-import com.example.jutjubic.infrastructure.persistence.entity.ActivationTokenEntity;
-import com.example.jutjubic.infrastructure.persistence.entity.UserEntity;
+import com.example.jutjubic.infrastructure.entity.ActivationTokenEntity;
+import com.example.jutjubic.infrastructure.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

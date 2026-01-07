@@ -1,6 +1,6 @@
-package com.example.jutjubic.infrastructure.persistence.repository;
+package com.example.jutjubic.infrastructure.repository;
 
-import com.example.jutjubic.infrastructure.persistence.entity.CommentEntity;
+import com.example.jutjubic.infrastructure.entity.CommentEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
