@@ -18,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -28,13 +27,16 @@ public class CommentServiceImpl implements CommentService {
     private final JpaVideoPostRepository videoPostRepository;
     private final JpaUserRepository userRepository;
 
-
-    //Kreira novi komentar
-    //@CacheEvict - brise kes komentara za taj video (jer je dodat novi)
-
+    /**
+     * Kreira novi komentar
+     * @CacheEvict(allEntries = true) - brise sve kesirane komentare
+     *
+     * kes kljucevi su oblika "videoId-page-size"
+     * moramo obrisati SVE kesirane komentare da bi korisnici videli nove
+     */
     @Override
     @Transactional
-    @CacheEvict(value = "comments", key = "#videoId")
+    @CacheEvict(value = "comments", allEntries = true)
     public CommentResponseDTO createComment(Long videoId, CreateCommentDTO commentDTO, String userEmail) {
 
         // Pronadji video objavu
@@ -59,10 +61,10 @@ public class CommentServiceImpl implements CommentService {
         return new CommentResponseDTO(savedComment);
     }
 
-
-    //Vraca komentare za video objavu sa paginacijom
-    //@Cacheable - kešira rezultat po videoId-u
-
+    /**
+     * Vraca komentare za video objavu sa paginacijom
+     * @Cacheable - kešira rezultat po videoId + page + size
+     */
     @Override
     @Cacheable(value = "comments", key = "#videoId + '-' + #page + '-' + #size")
     public Page<CommentResponseDTO> getCommentsByVideo(Long videoId, int page, int size) {
@@ -82,16 +84,16 @@ public class CommentServiceImpl implements CommentService {
         return commentsPage.map(CommentResponseDTO::new);
     }
 
-
-    //Brise komentar
-    //@CacheEvict - brise kes za taj video
-
+    /**
+     * Brise komentar
+     * @CacheEvict(allEntries = true) - brise sve kesirane komentare
+     */
     @Override
     @Transactional
     @CacheEvict(value = "comments", allEntries = true)
     public void deleteComment(Long commentId, String userEmail) {
 
-        // Pronadji komentar
+        // Pronađi komentar
         CommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Komentar sa ID " + commentId + " ne postoji"));
 
