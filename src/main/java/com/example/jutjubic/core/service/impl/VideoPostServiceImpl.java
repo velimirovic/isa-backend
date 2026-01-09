@@ -3,14 +3,15 @@ package com.example.jutjubic.core.service.impl;
 import com.example.jutjubic.api.dto.videopost.VideoPostDraftDTO;
 import com.example.jutjubic.api.dto.videopost.VideoResponseDTO;
 import com.example.jutjubic.core.service.FileStoringService;
+import com.example.jutjubic.core.service.LikeService;
 import com.example.jutjubic.core.service.VideoPostService;
-import com.example.jutjubic.domain.videopost.VideoPostStatus;
-import com.example.jutjubic.infrastructure.persistence.entity.TagEntity;
-import com.example.jutjubic.infrastructure.persistence.entity.UserEntity;
-import com.example.jutjubic.infrastructure.persistence.entity.VideoPostEntity;
-import com.example.jutjubic.infrastructure.persistence.repository.JpaTagRepository;
-import com.example.jutjubic.infrastructure.persistence.repository.JpaUserRepository;
-import com.example.jutjubic.infrastructure.persistence.repository.JpaVideoPostRepository;
+import com.example.jutjubic.core.domain.VideoPostStatus;
+import com.example.jutjubic.infrastructure.entity.TagEntity;
+import com.example.jutjubic.infrastructure.entity.UserEntity;
+import com.example.jutjubic.infrastructure.entity.VideoPostEntity;
+import com.example.jutjubic.infrastructure.repository.JpaTagRepository;
+import com.example.jutjubic.infrastructure.repository.JpaUserRepository;
+import com.example.jutjubic.infrastructure.repository.JpaVideoPostRepository;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
@@ -34,18 +35,21 @@ public class VideoPostServiceImpl implements VideoPostService {
     private final FileStoringService storingService;
     private final CacheManager cacheManager;
     private final JpaTagRepository tagRepository;
+    private final LikeService likeService;
 
     public VideoPostServiceImpl(
             JpaVideoPostRepository VideoPostRepository,
             FileStoringService storingService,
             JpaUserRepository userRepository,
             CacheManager cacheManager,
-            JpaTagRepository tagRepository) {
+            JpaTagRepository tagRepository,
+            LikeService likeService) {
         this.videoPostRepository = VideoPostRepository;
         this.storingService = storingService;
         this.userRepository = userRepository;
         this.cacheManager = cacheManager;
         this.tagRepository = tagRepository;
+        this.likeService = likeService;
     }
 
     @Transactional
@@ -274,6 +278,9 @@ public class VideoPostServiceImpl implements VideoPostService {
         videoResponseDTO.setStatus(videoPost.getStatus());
         videoResponseDTO.setDraftId(videoPost.getDraftId());
         videoResponseDTO.setViewCount(videoPost.getViewCount());
+
+        long likeCount = likeService.getLikeCount(videoPost.getId());
+        videoResponseDTO.setLikeCount(likeCount);
 
         List<String> tagNames = videoPost.getTags().stream()
                 .map(TagEntity::getName)

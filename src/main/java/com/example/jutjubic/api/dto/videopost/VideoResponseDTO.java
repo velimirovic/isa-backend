@@ -1,6 +1,6 @@
 package com.example.jutjubic.api.dto.videopost;
 
-import com.example.jutjubic.domain.videopost.VideoPostStatus;
+import com.example.jutjubic.core.domain.VideoPostStatus;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,4 +22,5 @@ public class VideoResponseDTO {
     public String draftId;
     public long viewCount;
     public List<String> tagNames;
+    private long likeCount;
 }

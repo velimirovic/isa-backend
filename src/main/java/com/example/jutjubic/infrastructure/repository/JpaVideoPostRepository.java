@@ -1,7 +1,7 @@
-package com.example.jutjubic.infrastructure.persistence.repository;
+package com.example.jutjubic.infrastructure.repository;
 
-import com.example.jutjubic.infrastructure.persistence.entity.UserEntity;
-import com.example.jutjubic.infrastructure.persistence.entity.VideoPostEntity;
+import com.example.jutjubic.infrastructure.entity.UserEntity;
+import com.example.jutjubic.infrastructure.entity.VideoPostEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

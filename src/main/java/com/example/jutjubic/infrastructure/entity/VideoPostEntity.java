@@ -1,6 +1,6 @@
-package com.example.jutjubic.infrastructure.persistence.entity;
+package com.example.jutjubic.infrastructure.entity;
 
-import com.example.jutjubic.domain.videopost.VideoPostStatus;
+import com.example.jutjubic.core.domain.VideoPostStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

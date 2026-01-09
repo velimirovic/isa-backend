@@ -1,7 +1,7 @@
 package com.example.jutjubic.infrastructure.security;
 
-import com.example.jutjubic.infrastructure.persistence.entity.UserEntity;
-import com.example.jutjubic.infrastructure.persistence.repository.JpaUserRepository;
+import com.example.jutjubic.infrastructure.entity.UserEntity;
+import com.example.jutjubic.infrastructure.repository.JpaUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
