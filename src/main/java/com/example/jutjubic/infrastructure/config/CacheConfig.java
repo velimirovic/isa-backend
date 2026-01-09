@@ -31,7 +31,18 @@ public class CacheConfig {
                         .expireAfterWrite(1, TimeUnit.MINUTES)
                         .build());
 
-        cacheManager.setCaches(Arrays.asList(thumbnailsCache, loginAttemptsCache));
+        // Cache za comments - 10 minuta
+        CaffeineCache commentsCache = new CaffeineCache("comments",
+                Caffeine.newBuilder()
+                        .expireAfterWrite(10, TimeUnit.MINUTES)
+                        .maximumSize(1000)  // Maksimalno 1000 kesiranih rezultata
+                        .build());
+
+        cacheManager.setCaches(Arrays.asList(
+                thumbnailsCache,
+                loginAttemptsCache,
+                commentsCache
+        ));
 
         return cacheManager;
     }
