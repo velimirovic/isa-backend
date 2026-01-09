@@ -5,7 +5,9 @@ import com.example.jutjubic.infrastructure.persistence.entity.VideoPostEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface JpaVideoPostRepository extends JpaRepository<VideoPostEntity, Long> {
 
@@ -26,4 +28,12 @@ public interface JpaVideoPostRepository extends JpaRepository<VideoPostEntity, L
         WHERE v.status = 'DRAFT' and v.author = :author
     """)
     VideoPostEntity findDraftByAuthor(UserEntity author);
+
+    @Modifying
+    @Query("""
+        UPDATE VideoPostEntity v
+        SET v.viewCount = v.viewCount + 1
+        WHERE v.id = :id
+    """)
+    void incrementViewCount(@Param("id") Long id);
 }
