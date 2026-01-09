@@ -185,6 +185,7 @@ public class VideoPostServiceImpl implements VideoPostService {
         return mapVideoPostDTO(videoPost);
     }
 
+    @Transactional
     public VideoResponseDTO getVideoPost(String videoDraftId) {
         VideoPostEntity videoPost = videoPostRepository.findByDraftId(videoDraftId);
         if (videoPost == null)
@@ -194,7 +195,12 @@ public class VideoPostServiceImpl implements VideoPostService {
         if (!result.isEmpty())
             throw new RuntimeException(result);
 
-        return mapVideoPostDTO(videoPost);
+        this.incrementViewCount(videoPost.getId());
+
+        var dto = mapVideoPostDTO(videoPost);
+        dto.setViewCount(dto.getViewCount()+1);
+
+        return dto;
     }
 
     public List<VideoResponseDTO> getAllVideoPosts(int page) {
@@ -250,6 +256,11 @@ public class VideoPostServiceImpl implements VideoPostService {
             }).collect(Collectors.toSet());
 
         videoPost.setTags(tags);
+    }
+
+    @Transactional
+    public void incrementViewCount(Long id) {
+        videoPostRepository.incrementViewCount(id);
     }
 
 
