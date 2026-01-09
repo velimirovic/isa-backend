@@ -17,4 +17,5 @@ public interface VideoPostService {
     List<VideoResponseDTO> getAllVideoPosts(int page);
     Resource getThumbnailByDraftId(String draftId);
     void addTagsToVideo(String draftId, List<String> tagNames);
+    void incrementViewCount(Long id);
 }
