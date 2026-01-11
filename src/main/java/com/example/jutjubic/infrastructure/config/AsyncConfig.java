@@ -5,6 +5,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 // Anotacija Async
 @Configuration
-@EnableAsync
+@EnableAsync(proxyTargetClass = true)
 public class AsyncConfig {
 }

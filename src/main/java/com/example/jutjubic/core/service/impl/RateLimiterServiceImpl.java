@@ -1,5 +1,6 @@
 package com.example.jutjubic.core.service.impl;
 
+import com.example.jutjubic.core.service.RateLimiterService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -8,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 //Ogranicavanje pokusaja logovanja
 @Service
-public class RateLimiterServiceImpl {
+public class RateLimiterServiceImpl implements RateLimiterService {
 
     //Broj pokusaja i vreme prvog
     private static class LoginAttempt {
