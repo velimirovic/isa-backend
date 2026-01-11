@@ -1,5 +1,6 @@
 package com.example.jutjubic.core.service.impl;
 
+import com.example.jutjubic.core.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 //Asinhrono slanje mailova
 @Service
-public class EmailServiceImpl {
+public class EmailServiceImpl implements EmailService {
 
     @Autowired
     private JavaMailSender javaMailSender;

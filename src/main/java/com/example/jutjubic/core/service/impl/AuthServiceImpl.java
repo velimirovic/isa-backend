@@ -3,6 +3,7 @@ package com.example.jutjubic.core.service.impl;
 import com.example.jutjubic.api.dto.auth.LoginRequest;
 import com.example.jutjubic.api.dto.auth.RegistrationRequest;
 import com.example.jutjubic.api.dto.auth.UserTokenState;
+import com.example.jutjubic.core.service.AuthService;
 import com.example.jutjubic.infrastructure.entity.ActivationTokenEntity;
 import com.example.jutjubic.infrastructure.entity.UserEntity;
 import com.example.jutjubic.infrastructure.repository.JpaActivationTokenRepository;
@@ -22,7 +23,7 @@ import java.util.UUID;
 
 // Autentifikacija i registracija
 @Service
-public class AuthServiceImpl {
+public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private JpaUserRepository userRepository;
