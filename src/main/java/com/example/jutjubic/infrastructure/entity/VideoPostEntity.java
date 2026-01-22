@@ -35,7 +35,7 @@ public class VideoPostEntity {
     @Column(name="thumbnail_path")
     private String thumbnailPath;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany(cascade = {CascadeType.MERGE})
     @JoinTable(
             name="video_post_tags",
             joinColumns = @JoinColumn(name="video_id"),
