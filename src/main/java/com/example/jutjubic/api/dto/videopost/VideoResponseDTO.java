@@ -23,4 +23,6 @@ public class VideoResponseDTO {
     public long viewCount;
     public List<String> tagNames;
     private long likeCount;
+    private Float latitude;
+    private Float longitude;
 }

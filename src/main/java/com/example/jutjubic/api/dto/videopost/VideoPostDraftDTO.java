@@ -11,4 +11,6 @@ public class VideoPostDraftDTO {
     public String title;
     public String description;
     public String draftId;
+    public Float latitude;
+    public Float longitude;
 }

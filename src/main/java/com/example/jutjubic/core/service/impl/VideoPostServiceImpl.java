@@ -69,6 +69,8 @@ public class VideoPostServiceImpl implements VideoPostService {
                 response.setTitle(videoPost.getTitle());
                 response.setDescription(videoPost.getDescription());
                 response.setDraftId(videoPost.getDraftId());
+                response.setLatitude(videoPost.getLatitude());
+                response.setLongitude(videoPost.getLongitude());
 
                 return response;
             }
@@ -156,13 +158,20 @@ public class VideoPostServiceImpl implements VideoPostService {
     }
 
     @Transactional
-    public String uploadPostDetails(String title, String description, List<String> tagNames, String draftId) {
+    public String uploadPostDetails(String title, String description, List<String> tagNames,
+                                    Float latitude, Float longitude, String draftId) {
         VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
         if (videoPost.getStatus() == VideoPostStatus.PUBLISHED)
             throw new RuntimeException("Post already published");
 
         videoPost.setTitle(title);
         videoPost.setDescription(description);
+
+        if (latitude != null && longitude != null) {
+            videoPost.setLatitude(latitude);
+            videoPost.setLongitude(longitude);
+        }
+
         addTagsToVideo(draftId, tagNames);
 
         return "success";
@@ -286,6 +295,9 @@ public class VideoPostServiceImpl implements VideoPostService {
                 .map(TagEntity::getName)
                 .toList();
         videoResponseDTO.setTagNames(tagNames);
+
+        videoResponseDTO.setLatitude(videoPost.getLatitude());
+        videoResponseDTO.setLongitude(videoPost.getLongitude());
 
         return videoResponseDTO;
     }
