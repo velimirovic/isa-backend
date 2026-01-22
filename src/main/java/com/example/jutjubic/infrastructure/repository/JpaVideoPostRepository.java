@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.util.List;
 
 public interface JpaVideoPostRepository extends JpaRepository<VideoPostEntity, Long> {
 
@@ -36,4 +37,19 @@ public interface JpaVideoPostRepository extends JpaRepository<VideoPostEntity, L
         WHERE v.id = :id
     """)
     void incrementViewCount(@Param("id") Long id);
+
+    @Query("""
+        SELECT v FROM VideoPostEntity v 
+        WHERE v.status = 'PUBLISHED' 
+        AND v.latitude IS NOT NULL 
+        AND v.longitude IS NOT NULL 
+        AND v.latitude BETWEEN :minLat AND :maxLat 
+        AND v.longitude BETWEEN :minLng AND :maxLng
+    """)
+    List<VideoPostEntity> findPublishedWithLocationInBounds(
+            @Param("minLat") double minLat,
+            @Param("maxLat") double maxLat,
+            @Param("minLng") double minLng,
+            @Param("maxLng") double maxLng
+    );
 }

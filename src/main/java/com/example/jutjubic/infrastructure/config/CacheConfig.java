@@ -27,12 +27,6 @@ public class CacheConfig {
                         .expireAfterWrite(60, TimeUnit.MINUTES)
                         .build());
 
-        // Cache za loginAttempts (rate limiter) - 1 minut
-        CaffeineCache loginAttemptsCache = new CaffeineCache("loginAttempts",
-                Caffeine.newBuilder()
-                        .expireAfterWrite(1, TimeUnit.MINUTES)
-                        .build());
-
         // Cache za comments - 10 minuta
         CaffeineCache commentsCache = new CaffeineCache("comments",
                 Caffeine.newBuilder()
@@ -40,10 +34,17 @@ public class CacheConfig {
                         .maximumSize(1000)  // Maksimalno 1000 kesiranih rezultata
                         .build());
 
+        // Cache za map tiles - 30 minuta
+        CaffeineCache mapTilesCache = new CaffeineCache("mapTiles",
+                Caffeine.newBuilder()
+                        .expireAfterWrite(30, TimeUnit.MINUTES)
+                        .maximumSize(500)  // Maksimalno 500 tile kombinacija
+                        .build());
+
         cacheManager.setCaches(Arrays.asList(
                 thumbnailsCache,
-                loginAttemptsCache,
-                commentsCache
+                commentsCache,
+                mapTilesCache
         ));
 
         return cacheManager;

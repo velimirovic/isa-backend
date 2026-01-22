@@ -116,11 +116,13 @@ public class VideoPostController {
     }
 
     @GetMapping("/api/video-posts")
-    public ResponseEntity<List<VideoResponseDTO>> getAllVideoPosts(@RequestParam("page") int page) {
+    public ResponseEntity<List<VideoResponseDTO>> getAllVideoPosts(
+            @RequestParam("page") int page,
+            @RequestParam(value = "size", defaultValue = "12") int size) {
         try {
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(videoPostService.getAllVideoPosts(page));
+                    .body(videoPostService.getAllVideoPosts(page, size));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)

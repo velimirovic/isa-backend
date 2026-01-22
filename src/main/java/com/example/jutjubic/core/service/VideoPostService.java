@@ -14,7 +14,7 @@ public interface VideoPostService {
     String uploadPostDetails(String title, String description, List<String> tagNames, Float latitude, Float longitude, String draftId);
     VideoResponseDTO publishVideoPost(String draftId);
     VideoResponseDTO getVideoPost(String videoId);
-    List<VideoResponseDTO> getAllVideoPosts(int page);
+    List<VideoResponseDTO> getAllVideoPosts(int page, int size);
     Resource getThumbnailByDraftId(String draftId);
     void addTagsToVideo(String draftId, List<String> tagNames);
     void incrementViewCount(Long id);

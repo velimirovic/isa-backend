@@ -212,8 +212,8 @@ public class VideoPostServiceImpl implements VideoPostService {
         return dto;
     }
 
-    public List<VideoResponseDTO> getAllVideoPosts(int page) {
-        Pageable pageable = PageRequest.of(page, 6);
+    public List<VideoResponseDTO> getAllVideoPosts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
         Page<VideoPostEntity> allVideoPosts = videoPostRepository.findAllPublished(pageable);
         List<VideoResponseDTO> posts = new ArrayList<>();
 
