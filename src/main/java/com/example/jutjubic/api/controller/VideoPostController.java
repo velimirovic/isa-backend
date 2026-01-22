@@ -68,12 +68,9 @@ public class VideoPostController {
 
     @PatchMapping("/api/video-posts/{id}")
     public ResponseEntity<String> uploadPostDetails(
-//            @RequestParam("title") String title,
-//            @RequestParam("description") String description,
-//            @RequestParam("tagNames") List<String> tagNames,
             @PathVariable("id") String draftId,
             @RequestBody PostDetailsDTO detailsDTO
-            ) {
+    ) {
         try {
             return ResponseEntity
                     .status(HttpStatus.OK)
@@ -81,6 +78,8 @@ public class VideoPostController {
                             detailsDTO.getTitle(),
                             detailsDTO.getDescription(),
                             detailsDTO.getTags(),
+                            detailsDTO.getLatitude(),
+                            detailsDTO.getLongitude(),
                             draftId));
         } catch (Exception e) {
             return ResponseEntity
