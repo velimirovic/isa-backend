@@ -2,6 +2,7 @@ package com.example.jutjubic.core.service.impl;
 
 import com.example.jutjubic.api.dto.map.VideoMarkerDTO;
 import com.example.jutjubic.core.service.VideoMapService;
+import com.example.jutjubic.core.domain.ZoomLevel;
 import com.example.jutjubic.infrastructure.entity.VideoPostEntity;
 import com.example.jutjubic.infrastructure.repository.JpaVideoPostRepository;
 import org.springframework.cache.annotation.Cacheable;
@@ -40,8 +41,30 @@ public class VideoMapServiceImpl implements VideoMapService {
         double minLng = tile2lon(minTileX, zoom);
         double maxLng = tile2lon(maxTileX + 1, zoom);
 
-        return getVideosInBounds(minLat, maxLat, minLng, maxLng);
+        // Uzmi zoom nivo strategiju
+        ZoomLevel zoomLevel = ZoomLevel.fromZoom(zoom);
+        int maxVideosPerTile = zoomLevel.getMaxVideosPerTile();
+
+        // Izračunaj koliko tile-ova pokrivamo
+        int totalTiles = (maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
+        int maxTotalVideos = totalTiles * maxVideosPerTile;
+
+        // Pozovi repository sa limitom
+        return getVideosInBoundsWithLimit(minLat, maxLat, minLng, maxLng, maxTotalVideos);
     }
+
+    //Metoda sa limitom
+    public List<VideoMarkerDTO> getVideosInBoundsWithLimit(double minLat, double maxLat,
+                                                           double minLng, double maxLng,
+                                                           int limit) {
+        List<VideoPostEntity> videos = videoPostRepository
+                .findPublishedWithLocationInBoundsWithLimit(minLat, maxLat, minLng, maxLng, limit);
+
+        return videos.stream()
+                .map(this::mapToMarkerDTO)
+                .collect(Collectors.toList());
+    }
+
 
     // Tile matematika: tile broj -> geografska koordinata
     private double tile2lon(int x, int z) {
