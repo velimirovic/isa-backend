@@ -150,4 +150,19 @@ public class VideoPostController {
                     .body(null);
         }
     }
+
+    @GetMapping("/api/video-posts/user/{username}")
+    public ResponseEntity<List<VideoResponseDTO>> getVideoPostsByUser(
+            @PathVariable String username,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        try {
+            List<VideoResponseDTO> videos = videoPostService.getVideoPostsByUser(username, page, size);
+            return ResponseEntity.ok(videos);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(null);
+        }
+    }
 }
