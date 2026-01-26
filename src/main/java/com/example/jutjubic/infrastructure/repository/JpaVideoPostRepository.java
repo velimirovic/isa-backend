@@ -52,4 +52,7 @@ public interface JpaVideoPostRepository extends JpaRepository<VideoPostEntity, L
             @Param("minLng") double minLng,
             @Param("maxLng") double maxLng
     );
+
+    @Query("SELECT v FROM VideoPostEntity v WHERE v.author.username = :username AND v.status = 'PUBLISHED'")
+    Page<VideoPostEntity> findByAuthorUsernameAndPublished(@Param("username") String username, Pageable pageable);
 }

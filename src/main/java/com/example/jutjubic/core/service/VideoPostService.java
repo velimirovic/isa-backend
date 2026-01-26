@@ -18,4 +18,5 @@ public interface VideoPostService {
     Resource getThumbnailByDraftId(String draftId);
     void addTagsToVideo(String draftId, List<String> tagNames);
     void incrementViewCount(Long id);
+    public List<VideoResponseDTO> getVideoPostsByUser(String username, int page, int size);
 }
