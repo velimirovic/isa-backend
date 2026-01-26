@@ -55,4 +55,22 @@ public interface JpaVideoPostRepository extends JpaRepository<VideoPostEntity, L
 
     @Query("SELECT v FROM VideoPostEntity v WHERE v.author.username = :username AND v.status = 'PUBLISHED'")
     Page<VideoPostEntity> findByAuthorUsernameAndPublished(@Param("username") String username, Pageable pageable);
+           
+    @Query(value = """
+    SELECT v.* FROM videos v 
+    WHERE v.status = 'PUBLISHED' 
+    AND v.latitude IS NOT NULL 
+    AND v.longitude IS NOT NULL 
+    AND v.latitude BETWEEN :minLat AND :maxLat 
+    AND v.longitude BETWEEN :minLng AND :maxLng
+    ORDER BY v.view_count DESC, v.created_at DESC
+    LIMIT :limit
+    """, nativeQuery = true)
+    List<VideoPostEntity> findPublishedWithLocationInBoundsWithLimit(
+            @Param("minLat") double minLat,
+            @Param("maxLat") double maxLat,
+            @Param("minLng") double minLng,
+            @Param("maxLng") double maxLng,
+            @Param("limit") int limit
+    );
 }
