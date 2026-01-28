@@ -1,6 +1,7 @@
 package com.example.jutjubic.api.controller;
 
 import com.example.jutjubic.api.dto.map.VideoMarkerDTO;
+import com.example.jutjubic.core.domain.FilterType;
 import com.example.jutjubic.core.service.VideoMapService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -45,10 +46,11 @@ public class VideoMapController {
             @RequestParam("minTileX") int minTileX,
             @RequestParam("maxTileX") int maxTileX,
             @RequestParam("minTileY") int minTileY,
-            @RequestParam("maxTileY") int maxTileY) {
+            @RequestParam("maxTileY") int maxTileY,
+            @RequestParam("filter") FilterType filter) {
         try {
             List<VideoMarkerDTO> videos = videoMapService
-                    .getVideosForTiles(zoom, minTileX, maxTileX, minTileY, maxTileY);
+                    .getVideosForTiles(zoom, minTileX, maxTileX, minTileY, maxTileY, filter);
             return ResponseEntity.ok(videos);
         } catch (Exception e) {
             return ResponseEntity

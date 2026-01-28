@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface JpaVideoPostRepository extends JpaRepository<VideoPostEntity, Long> {
@@ -19,6 +21,8 @@ public interface JpaVideoPostRepository extends JpaRepository<VideoPostEntity, L
         ORDER BY v.createdAt DESC
     """)
     Page<VideoPostEntity> findAllPublished(Pageable pageable);
+    Page<VideoPostEntity> findAllByCreatedAtGreaterThanEqual(LocalDateTime from, Pageable pageable);
+
     Page<VideoPostEntity> findAllByAuthor(UserEntity author, Pageable pageable);
     VideoPostEntity findById(long id);
     VideoPostEntity findByDraftId(String draftId);
@@ -67,6 +71,15 @@ public interface JpaVideoPostRepository extends JpaRepository<VideoPostEntity, L
     LIMIT :limit
     """, nativeQuery = true)
     List<VideoPostEntity> findPublishedWithLocationInBoundsWithLimit(
+            @Param("minLat") double minLat,
+            @Param("maxLat") double maxLat,
+            @Param("minLng") double minLng,
+            @Param("maxLng") double maxLng,
+            @Param("limit") int limit
+    );
+
+    List<VideoPostEntity> findPublishedWithLocationInBoundsWithLimitByCreatedAtGreaterThanEqual(
+            @Param("from") LocalDateTime from,
             @Param("minLat") double minLat,
             @Param("maxLat") double maxLat,
             @Param("minLng") double minLng,

@@ -3,6 +3,7 @@ package com.example.jutjubic.api.controller;
 import com.example.jutjubic.api.dto.videopost.PostDetailsDTO;
 import com.example.jutjubic.api.dto.videopost.VideoPostDraftDTO;
 import com.example.jutjubic.api.dto.videopost.VideoResponseDTO;
+import com.example.jutjubic.core.domain.FilterType;
 import com.example.jutjubic.core.service.VideoPostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -118,11 +119,13 @@ public class VideoPostController {
     @GetMapping("/api/video-posts")
     public ResponseEntity<List<VideoResponseDTO>> getAllVideoPosts(
             @RequestParam("page") int page,
-            @RequestParam(value = "size", defaultValue = "12") int size) {
+            @RequestParam(value = "size", defaultValue = "12") int size,
+            @RequestParam("filter") FilterType filter) {
         try {
+
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(videoPostService.getAllVideoPosts(page, size));
+                    .body(videoPostService.getAllVideoPosts(page, size, filter));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)

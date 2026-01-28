@@ -2,6 +2,7 @@ package com.example.jutjubic.core.service.impl;
 
 import com.example.jutjubic.api.dto.videopost.VideoPostDraftDTO;
 import com.example.jutjubic.api.dto.videopost.VideoResponseDTO;
+import com.example.jutjubic.core.domain.FilterType;
 import com.example.jutjubic.core.service.FileStoringService;
 import com.example.jutjubic.core.service.LikeService;
 import com.example.jutjubic.core.service.VideoPostService;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -213,9 +215,25 @@ public class VideoPostServiceImpl implements VideoPostService {
         return dto;
     }
 
-    public List<VideoResponseDTO> getAllVideoPosts(int page, int size) {
+    public List<VideoResponseDTO> getAllVideoPosts(int page, int size, FilterType filter) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<VideoPostEntity> allVideoPosts = videoPostRepository.findAllPublished(pageable);
+        Page<VideoPostEntity> allVideoPosts;
+
+        LocalDateTime now = LocalDateTime.now();
+        allVideoPosts = switch (filter) {
+            case LAST_30_DAYS -> {
+                LocalDateTime from = now.minusDays(30);
+                yield videoPostRepository.findAllByCreatedAtGreaterThanEqual(from, pageable);
+            }
+            case CURRENT_YEAR -> {
+                LocalDateTime from = LocalDate.now()
+                        .withDayOfYear(1)
+                        .atStartOfDay();
+                yield videoPostRepository.findAllByCreatedAtGreaterThanEqual(from, pageable);
+            }
+            default -> videoPostRepository.findAllPublished(pageable);
+        };
+
         List<VideoResponseDTO> posts = new ArrayList<>();
 
         for (VideoPostEntity videoPost : allVideoPosts) {
