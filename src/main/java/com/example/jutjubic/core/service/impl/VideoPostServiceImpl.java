@@ -223,13 +223,13 @@ public class VideoPostServiceImpl implements VideoPostService {
         allVideoPosts = switch (filter) {
             case LAST_30_DAYS -> {
                 LocalDateTime from = now.minusDays(30);
-                yield videoPostRepository.findAllByCreatedAtGreaterThanEqual(from, pageable);
+                yield videoPostRepository.findAllByCreatedAtGreaterThanEqualOrderByCreatedAtDesc(from, pageable);
             }
             case CURRENT_YEAR -> {
                 LocalDateTime from = LocalDate.now()
                         .withDayOfYear(1)
                         .atStartOfDay();
-                yield videoPostRepository.findAllByCreatedAtGreaterThanEqual(from, pageable);
+                yield videoPostRepository.findAllByCreatedAtGreaterThanEqualOrderByCreatedAtDesc(from, pageable);
             }
             default -> videoPostRepository.findAllPublished(pageable);
         };
@@ -317,6 +317,8 @@ public class VideoPostServiceImpl implements VideoPostService {
 
         videoResponseDTO.setLatitude(videoPost.getLatitude());
         videoResponseDTO.setLongitude(videoPost.getLongitude());
+
+        videoResponseDTO.setVersion(videoPost.getVersion());
 
         return videoResponseDTO;
     }
