@@ -7,6 +7,8 @@ import com.example.jutjubic.core.domain.ZoomLevel;
 import com.example.jutjubic.infrastructure.entity.VideoPostEntity;
 import com.example.jutjubic.infrastructure.repository.JpaVideoPostRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -23,9 +25,11 @@ import java.util.stream.Collectors;
 public class VideoMapServiceImpl implements VideoMapService {
 
     private final JpaVideoPostRepository videoPostRepository;
+    private final CacheManager cacheManager;
 
-    public VideoMapServiceImpl(JpaVideoPostRepository videoPostRepository) {
+    public VideoMapServiceImpl(JpaVideoPostRepository videoPostRepository, CacheManager cacheManager) {
         this.videoPostRepository = videoPostRepository;
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -93,6 +97,56 @@ public class VideoMapServiceImpl implements VideoMapService {
     @CacheEvict(value = "mapTiles", allEntries = true)
     public void refreshAllTileCache() {
         log.info("refreshing all tile cache, will be filled on next user request");
+    }
+
+    public void invalidateTileCacheForLocation(float latitude, float longitude) {
+        for (int zoom = 0; zoom < 18; zoom++) {
+            int tileX = lon2tile(longitude, zoom);
+            int tileY = lat2tile(latitude, zoom);
+
+            evictTileAndNeighbors(zoom, tileX, tileY);
+        }
+    }
+
+    private void evictTileAndNeighbors(int zoom, int tileX, int tileY) {
+        var cache = cacheManager.getCache("mapTiles");
+        if (cache == null)
+            return;
+
+        var limit = 6;
+        int minX = tileX - limit;
+        int maxX = tileX + limit;
+        int minY = tileY - limit;
+        int maxY = tileY + limit;
+
+        for (int dx = minX; dx < maxX; dx++) {
+            for (int dy = minY; dy < maxY; dy++)
+                evictForAllTimeFilters(zoom, dx, dx+5, dy, dy+2, cache);
+        }
+    }
+
+    private void evictForAllTimeFilters(int zoom, int minX, int maxX, int minY, int maxY, Cache cache) {
+        // #zoom + '_' + #minTileX + '_' + #maxTileX + '_' + #minTileY + '_' + #maxTileY + '_' + #filter
+        String cacheKey = String.format("%d_%d_%d_%d_%d_%s", zoom, minX, maxX, minY, maxY, "ALL_TIME");
+        cache.evict(cacheKey);
+        log.info("evicted key all_time: {}", cacheKey);
+        cacheKey = String.format("%d_%d_%d_%d_%d_%s", zoom, minX, maxX, minY, maxY, "LAST_30_DAYS");
+        cache.evict(cacheKey);
+        log.info("evicted key last_30_days: {}", cacheKey);
+        cacheKey = String.format("%d_%d_%d_%d_%d_%s", zoom, minX, maxX, minY, maxY, "CURRENT_YEAR");
+        cache.evict(cacheKey);
+        log.info("evicted key current_year: {}", cacheKey);
+    }
+
+    // Tile matematika - geografska koordinata -> tile
+
+    private int lon2tile(double lon, int zoom) {
+        return (int) Math.floor((lon + 180.0) / 360.0 * Math.pow(2.0, zoom));
+    }
+
+    private int lat2tile(double lat, int zoom) {
+        double latRad = Math.toRadians(lat);
+        return (int) Math.floor((1.0 - Math.log(Math.tan(latRad) + 1.0 / Math.cos(latRad)) / Math.PI) / 2.0 * Math.pow(2.0, zoom));
     }
 
     // Tile matematika: tile broj -> geografska koordinata

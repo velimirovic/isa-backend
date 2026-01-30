@@ -5,6 +5,7 @@ import com.example.jutjubic.api.dto.videopost.VideoResponseDTO;
 import com.example.jutjubic.core.domain.FilterType;
 import com.example.jutjubic.core.service.FileStoringService;
 import com.example.jutjubic.core.service.LikeService;
+import com.example.jutjubic.core.service.VideoMapService;
 import com.example.jutjubic.core.service.VideoPostService;
 import com.example.jutjubic.core.domain.VideoPostStatus;
 import com.example.jutjubic.infrastructure.entity.TagEntity;
@@ -13,6 +14,7 @@ import com.example.jutjubic.infrastructure.entity.VideoPostEntity;
 import com.example.jutjubic.infrastructure.repository.JpaTagRepository;
 import com.example.jutjubic.infrastructure.repository.JpaUserRepository;
 import com.example.jutjubic.infrastructure.repository.JpaVideoPostRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
@@ -29,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 public class VideoPostServiceImpl implements VideoPostService {
@@ -39,6 +42,7 @@ public class VideoPostServiceImpl implements VideoPostService {
     private final CacheManager cacheManager;
     private final JpaTagRepository tagRepository;
     private final LikeService likeService;
+    private final VideoMapService videoMapService;
 
     public VideoPostServiceImpl(
             JpaVideoPostRepository VideoPostRepository,
@@ -46,13 +50,15 @@ public class VideoPostServiceImpl implements VideoPostService {
             JpaUserRepository userRepository,
             CacheManager cacheManager,
             JpaTagRepository tagRepository,
-            LikeService likeService) {
+            LikeService likeService,
+            VideoMapService videoMapService) {
         this.videoPostRepository = VideoPostRepository;
         this.storingService = storingService;
         this.userRepository = userRepository;
         this.cacheManager = cacheManager;
         this.tagRepository = tagRepository;
         this.likeService = likeService;
+        this.videoMapService = videoMapService;
     }
 
     @Transactional
@@ -193,6 +199,15 @@ public class VideoPostServiceImpl implements VideoPostService {
 
         videoPost.setStatus(VideoPostStatus.PUBLISHED);
         videoPost.setCreatedAt(LocalDateTime.now());
+
+        videoPostRepository.save(videoPost);
+
+        try {
+            log.info("invalidating tile cache for {} {}", videoPost.getLatitude(), videoPost.getLongitude());
+            videoMapService.invalidateTileCacheForLocation(videoPost.getLatitude(), videoPost.getLongitude());
+        } catch (Exception e) {
+            log.error("failed to invalidate tile cache", e);
+        }
 
         return mapVideoPostDTO(videoPost);
     }
