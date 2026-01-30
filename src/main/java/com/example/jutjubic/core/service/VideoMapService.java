@@ -9,4 +9,5 @@ public interface VideoMapService {
     List<VideoMarkerDTO> getVideosInBounds(double minLat, double maxLat, double minLng, double maxLng);
     List<VideoMarkerDTO> getVideosForTiles(int zoom, int minTileX, int maxTileX, int minTileY, int maxTileY, FilterType filter);
     List<VideoMarkerDTO> getVideosInBoundsWithLimit(double minLat, double maxLat, double minLng, double maxLng, int limit, FilterType filter);
+    void refreshAllTileCache();
 }

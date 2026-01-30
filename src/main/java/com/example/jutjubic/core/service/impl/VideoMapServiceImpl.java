@@ -6,6 +6,8 @@ import com.example.jutjubic.core.service.VideoMapService;
 import com.example.jutjubic.core.domain.ZoomLevel;
 import com.example.jutjubic.infrastructure.entity.VideoPostEntity;
 import com.example.jutjubic.infrastructure.repository.JpaVideoPostRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 public class VideoMapServiceImpl implements VideoMapService {
@@ -86,6 +89,11 @@ public class VideoMapServiceImpl implements VideoMapService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @CacheEvict(value = "mapTiles", allEntries = true)
+    public void refreshAllTileCache() {
+        log.info("refreshing all tile cache, will be filled on next user request");
+    }
 
     // Tile matematika: tile broj -> geografska koordinata
     private double tile2lon(int x, int z) {
