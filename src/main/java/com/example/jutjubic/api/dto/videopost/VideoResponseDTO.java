@@ -25,4 +25,5 @@ public class VideoResponseDTO {
     private long likeCount;
     private Float latitude;
     private Float longitude;
+    public Long version;
 }

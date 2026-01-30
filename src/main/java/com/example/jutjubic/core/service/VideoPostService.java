@@ -2,6 +2,7 @@ package com.example.jutjubic.core.service;
 
 import com.example.jutjubic.api.dto.videopost.VideoPostDraftDTO;
 import com.example.jutjubic.api.dto.videopost.VideoResponseDTO;
+import com.example.jutjubic.core.domain.FilterType;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,9 +15,9 @@ public interface VideoPostService {
     String uploadPostDetails(String title, String description, List<String> tagNames, Float latitude, Float longitude, String draftId);
     VideoResponseDTO publishVideoPost(String draftId);
     VideoResponseDTO getVideoPost(String videoId);
-    List<VideoResponseDTO> getAllVideoPosts(int page, int size);
+    List<VideoResponseDTO> getAllVideoPosts(int page, int size, FilterType filter);
     Resource getThumbnailByDraftId(String draftId);
     void addTagsToVideo(String draftId, List<String> tagNames);
     void incrementViewCount(Long id);
-    public List<VideoResponseDTO> getVideoPostsByUser(String username, int page, int size);
+    List<VideoResponseDTO> getVideoPostsByUser(String username, int page, int size);
 }

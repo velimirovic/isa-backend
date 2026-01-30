@@ -66,6 +66,9 @@ public class VideoPostEntity {
     @Column(name="draftId")
     private String draftId;
 
+    @Version
+    private Long version;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
