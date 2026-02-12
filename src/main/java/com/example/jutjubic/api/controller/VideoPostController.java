@@ -81,6 +81,8 @@ public class VideoPostController {
                             detailsDTO.getTags(),
                             detailsDTO.getLatitude(),
                             detailsDTO.getLongitude(),
+                            detailsDTO.getScheduledDateTime(),
+                            detailsDTO.getDurationSeconds(),
                             draftId));
         } catch (Exception e) {
             return ResponseEntity
@@ -165,6 +167,20 @@ public class VideoPostController {
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
+                    .body(null);
+        }
+    }
+
+    @GetMapping("/api/video-posts/{id}/playback-offset")
+    public ResponseEntity<Long> getPlaybackOffset(@PathVariable("id") String draftId) {
+        try {
+            Long offset = videoPostService.getPlaybackOffset(draftId);
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(offset);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
         }
     }

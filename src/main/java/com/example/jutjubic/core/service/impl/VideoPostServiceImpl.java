@@ -168,13 +168,21 @@ public class VideoPostServiceImpl implements VideoPostService {
 
     @Transactional
     public String uploadPostDetails(String title, String description, List<String> tagNames,
-                                    Float latitude, Float longitude, String draftId) {
+                                    Float latitude, Float longitude, LocalDateTime scheduledDateTime, 
+                                    Integer durationSeconds, String draftId) {
         VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
         if (videoPost.getStatus() == VideoPostStatus.PUBLISHED)
             throw new RuntimeException("Post already published");
 
         videoPost.setTitle(title);
         videoPost.setDescription(description);
+        videoPost.setScheduledDateTime(scheduledDateTime);
+        videoPost.setDurationSeconds(durationSeconds);
+        
+        log.info("uploadPostDetails - scheduledDateTime received: {}, duration: {}s", 
+                 scheduledDateTime, durationSeconds);
+        log.info("uploadPostDetails - videoPost.scheduledDateTime set to: {}", 
+                 videoPost.getScheduledDateTime());
 
         if (latitude != null && longitude != null) {
             videoPost.setLatitude(latitude);
@@ -182,6 +190,10 @@ public class VideoPostServiceImpl implements VideoPostService {
         }
 
         addTagsToVideo(draftId, tagNames);
+        
+        videoPostRepository.save(videoPost);
+        videoPostRepository.flush();
+        log.info("uploadPostDetails - after save, scheduledDateTime: {}", videoPost.getScheduledDateTime());
 
         return "success";
     }
@@ -222,6 +234,9 @@ public class VideoPostServiceImpl implements VideoPostService {
         if (!result.isEmpty())
             throw new RuntimeException(result);
 
+        // Don't block access to scheduled videos - let the frontend handle countdown
+        // This allows users to see title, description, author before the video starts
+
         this.incrementViewCount(videoPost.getId());
 
         var dto = mapVideoPostDTO(videoPost);
@@ -252,6 +267,7 @@ public class VideoPostServiceImpl implements VideoPostService {
         List<VideoResponseDTO> posts = new ArrayList<>();
 
         for (VideoPostEntity videoPost : allVideoPosts) {
+            // Don't filter scheduled videos - show them all on home page
             posts.add(mapVideoPostDTO(videoPost));
         }
 
@@ -334,6 +350,11 @@ public class VideoPostServiceImpl implements VideoPostService {
         videoResponseDTO.setLongitude(videoPost.getLongitude());
 
         videoResponseDTO.setVersion(videoPost.getVersion());
+        videoResponseDTO.setScheduledDateTime(videoPost.getScheduledDateTime());
+        videoResponseDTO.setDurationSeconds(videoPost.getDurationSeconds());
+        
+        log.info("mapVideoPostDTO - draftId: {}, scheduledDateTime: {}, duration: {}", 
+                 videoPost.getDraftId(), videoPost.getScheduledDateTime(), videoPost.getDurationSeconds());
 
         return videoResponseDTO;
     }
@@ -345,10 +366,46 @@ public class VideoPostServiceImpl implements VideoPostService {
                 pageable
         );
 
+        LocalDateTime now = LocalDateTime.now();
         List<VideoResponseDTO> posts = new ArrayList<>();
         for (VideoPostEntity videoPost : userVideos) {
+            // Filter out videos that are scheduled but not yet available
+            if (videoPost.getScheduledDateTime() != null && now.isBefore(videoPost.getScheduledDateTime())) {
+                continue;
+            }
             posts.add(mapVideoPostDTO(videoPost));
         }
         return posts;
+    }
+
+    public Long getPlaybackOffset(String draftId) {
+        VideoPostEntity videoPost = videoPostRepository.findByDraftId(draftId);
+        if (videoPost == null)
+            throw new RuntimeException("Post not found");
+
+        if (videoPost.getScheduledDateTime() == null) {
+            // No scheduled time, return 0 (play from start)
+            log.info("getPlaybackOffset - no scheduled time, returning 0");
+            return 0L;
+        }
+
+        // Use local server time for all comparisons
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime scheduled = videoPost.getScheduledDateTime();
+        
+        log.info("getPlaybackOffset - draftId: {}, now: {}, scheduled: {}", 
+                 draftId, now, scheduled);
+
+        if (now.isBefore(scheduled)) {
+            // Video hasn't started yet, return negative offset (seconds until start)
+            long secondsUntilStart = java.time.Duration.between(now, scheduled).getSeconds();
+            log.info("getPlaybackOffset - video not started, seconds until start: {}", secondsUntilStart);
+            return -secondsUntilStart;
+        }
+
+        // Video has started, calculate offset in seconds
+        long offset = java.time.Duration.between(scheduled, now).getSeconds();
+        log.info("getPlaybackOffset - video started, offset: {}", offset);
+        return offset;
     }
 }

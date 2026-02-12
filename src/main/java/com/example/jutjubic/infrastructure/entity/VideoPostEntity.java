@@ -66,6 +66,12 @@ public class VideoPostEntity {
     @Column(name="draftId")
     private String draftId;
 
+    @Column(name="scheduled_date_time")
+    private LocalDateTime scheduledDateTime;
+
+    @Column(name="duration_seconds")
+    private Integer durationSeconds;
+
     @Version
     private Long version;
 

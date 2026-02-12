@@ -26,4 +26,6 @@ public class VideoResponseDTO {
     private Float latitude;
     private Float longitude;
     public Long version;
+    private LocalDateTime scheduledDateTime;
+    private Integer durationSeconds;
 }
