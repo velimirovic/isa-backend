@@ -3,6 +3,7 @@ package com.example.jutjubic.api.dto.videopost;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -13,4 +14,6 @@ public class PostDetailsDTO {
     private List<String> tags;
     private Float latitude;
     private Float longitude;
+    private LocalDateTime scheduledDateTime;
+    private Integer durationSeconds;
 }

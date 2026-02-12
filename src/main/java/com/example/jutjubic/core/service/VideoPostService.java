@@ -6,13 +6,14 @@ import com.example.jutjubic.core.domain.FilterType;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface VideoPostService {
     VideoPostDraftDTO createDraft(String authorEmail);
     String uploadVideo(MultipartFile video, String draftId);
     String uploadThumbnail(MultipartFile thumbnail, String draftId);
-    String uploadPostDetails(String title, String description, List<String> tagNames, Float latitude, Float longitude, String draftId);
+    String uploadPostDetails(String title, String description, List<String> tagNames, Float latitude, Float longitude, LocalDateTime scheduledDateTime, Integer durationSeconds, String draftId);
     VideoResponseDTO publishVideoPost(String draftId);
     VideoResponseDTO getVideoPost(String videoId);
     List<VideoResponseDTO> getAllVideoPosts(int page, int size, FilterType filter);
@@ -20,4 +21,5 @@ public interface VideoPostService {
     void addTagsToVideo(String draftId, List<String> tagNames);
     void incrementViewCount(Long id);
     List<VideoResponseDTO> getVideoPostsByUser(String username, int page, int size);
+    Long getPlaybackOffset(String draftId);
 }
