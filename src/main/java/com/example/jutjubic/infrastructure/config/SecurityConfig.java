@@ -1,5 +1,6 @@
 package com.example.jutjubic.infrastructure.config;
 
+import com.example.jutjubic.infrastructure.monitoring.ActiveUsersMetrics;
 import com.example.jutjubic.infrastructure.security.CustomUserDetailsService;
 import com.example.jutjubic.infrastructure.security.RestAuthenticationEntryPoint;
 import com.example.jutjubic.infrastructure.security.jwt.TokenAuthenticationFilter;
@@ -33,6 +34,9 @@ public class SecurityConfig {
 
     @Autowired
     private TokenUtils tokenUtils;
+    
+    @Autowired
+    private ActiveUsersMetrics activeUsersMetrics;
 
 
     @Bean
@@ -60,6 +64,7 @@ public class SecurityConfig {
         // Dozvole pristupa
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()  // Login/registracija dostupni svima
+                .requestMatchers("/actuator/**").permitAll()  // Metrics endpoints za Prometheus
                 .requestMatchers("/api/video-posts/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/video-posts/{id}/thumbnail").permitAll()
@@ -76,7 +81,7 @@ public class SecurityConfig {
 
         // Dodaj TokenAuthenticationFilter pre BasicAuthenticationFilter-a
         http.addFilterBefore(
-                new TokenAuthenticationFilter(tokenUtils, userDetailsService),
+                new TokenAuthenticationFilter(tokenUtils, userDetailsService, activeUsersMetrics),
                 BasicAuthenticationFilter.class
         );
 

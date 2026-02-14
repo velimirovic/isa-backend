@@ -1,5 +1,6 @@
 package com.example.jutjubic.infrastructure.security.jwt;
 
+import com.example.jutjubic.infrastructure.monitoring.ActiveUsersMetrics;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,12 +22,14 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     private TokenUtils tokenUtils;
     private UserDetailsService userDetailsService;
+    private ActiveUsersMetrics activeUsersMetrics;
 
     protected final Log LOGGER = LogFactory.getLog(getClass());
 
-    public TokenAuthenticationFilter(TokenUtils tokenUtils, UserDetailsService userDetailsService) {
+    public TokenAuthenticationFilter(TokenUtils tokenUtils, UserDetailsService userDetailsService, ActiveUsersMetrics activeUsersMetrics) {
         this.tokenUtils = tokenUtils;
         this.userDetailsService = userDetailsService;
+        this.activeUsersMetrics = activeUsersMetrics;
     }
 
     @Override
@@ -64,6 +67,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
                         // 6. Postavi autentifikaciju u SecurityContext
                         SecurityContextHolder.getContext().setAuthentication(authentication);
+                        
+                        // 7. Registruj aktivnost korisnika za monitoring
+                        if (activeUsersMetrics != null) {
+                            activeUsersMetrics.recordUserActivity(email);
+                        }
                     }
                 }
             }
