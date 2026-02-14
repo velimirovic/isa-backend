@@ -11,9 +11,11 @@ import com.example.jutjubic.core.domain.VideoPostStatus;
 import com.example.jutjubic.infrastructure.entity.TagEntity;
 import com.example.jutjubic.infrastructure.entity.UserEntity;
 import com.example.jutjubic.infrastructure.entity.VideoPostEntity;
+import com.example.jutjubic.infrastructure.entity.VideoViewEntity;
 import com.example.jutjubic.infrastructure.repository.JpaTagRepository;
 import com.example.jutjubic.infrastructure.repository.JpaUserRepository;
 import com.example.jutjubic.infrastructure.repository.JpaVideoPostRepository;
+import com.example.jutjubic.infrastructure.repository.JpaVideoViewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
@@ -43,6 +45,7 @@ public class VideoPostServiceImpl implements VideoPostService {
     private final JpaTagRepository tagRepository;
     private final LikeService likeService;
     private final VideoMapService videoMapService;
+    private final JpaVideoViewRepository videoViewRepository;
 
     public VideoPostServiceImpl(
             JpaVideoPostRepository VideoPostRepository,
@@ -51,7 +54,8 @@ public class VideoPostServiceImpl implements VideoPostService {
             CacheManager cacheManager,
             JpaTagRepository tagRepository,
             LikeService likeService,
-            VideoMapService videoMapService) {
+            VideoMapService videoMapService,
+            JpaVideoViewRepository videoViewRepository) {
         this.videoPostRepository = VideoPostRepository;
         this.storingService = storingService;
         this.userRepository = userRepository;
@@ -59,6 +63,7 @@ public class VideoPostServiceImpl implements VideoPostService {
         this.tagRepository = tagRepository;
         this.likeService = likeService;
         this.videoMapService = videoMapService;
+        this.videoViewRepository = videoViewRepository;
     }
 
     @Transactional
@@ -245,6 +250,19 @@ public class VideoPostServiceImpl implements VideoPostService {
         return dto;
     }
 
+    @Override
+    public VideoResponseDTO getVideoPostWithoutIncrementingViews(String videoDraftId) {
+        VideoPostEntity videoPost = videoPostRepository.findByDraftId(videoDraftId);
+        if (videoPost == null)
+            throw new RuntimeException("Post not found");
+
+        var result = ValidateVideoPost(videoPost);
+        if (!result.isEmpty())
+            throw new RuntimeException(result);
+
+        return mapVideoPostDTO(videoPost);
+    }
+
     public List<VideoResponseDTO> getAllVideoPosts(int page, int size, FilterType filter) {
         Pageable pageable = PageRequest.of(page, size);
         Page<VideoPostEntity> allVideoPosts;
@@ -320,6 +338,10 @@ public class VideoPostServiceImpl implements VideoPostService {
     @Transactional
     public void incrementViewCount(Long id) {
         videoPostRepository.incrementViewCount(id);
+        
+        // Čuvanje individual view zapisa za ETL pipeline
+        VideoViewEntity view = new VideoViewEntity(id, LocalDateTime.now());
+        videoViewRepository.save(view);
     }
 
 

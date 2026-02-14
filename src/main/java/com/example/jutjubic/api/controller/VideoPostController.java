@@ -4,6 +4,8 @@ import com.example.jutjubic.api.dto.videopost.PostDetailsDTO;
 import com.example.jutjubic.api.dto.videopost.VideoPostDraftDTO;
 import com.example.jutjubic.api.dto.videopost.VideoResponseDTO;
 import com.example.jutjubic.core.domain.FilterType;
+import com.example.jutjubic.core.service.PopularVideosETLService;
+import com.example.jutjubic.core.service.PopularVideosService;
 import com.example.jutjubic.core.service.VideoPostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -22,6 +24,8 @@ import java.util.List;
 public class VideoPostController {
 
     final VideoPostService videoPostService;
+    final PopularVideosService popularVideosService;
+    final PopularVideosETLService popularVideosETLService;
 
     @PostMapping("/api/video-posts/draft")
     public ResponseEntity<VideoPostDraftDTO> startDraft(
@@ -182,6 +186,36 @@ public class VideoPostController {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
+        }
+    }
+
+    /**
+     * Vraća top 3 najpopularnija videa iz poslednjeg ETL izvršavanja
+     */
+    @GetMapping("/api/video-posts/popular")
+    public ResponseEntity<List<VideoResponseDTO>> getPopularVideos() {
+        try {
+            List<VideoResponseDTO> popularVideos = popularVideosService.getTop3PopularVideos();
+            return ResponseEntity.ok(popularVideos);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(List.of());
+        }
+    }
+
+    /**
+     * Ručno pokretanje ETL pipeline-a (za testiranje/admin)
+     */
+    @PostMapping("/api/video-posts/etl/run")
+    public ResponseEntity<String> triggerETL() {
+        try {
+            popularVideosETLService.runPipelineManually();
+            return ResponseEntity.ok("ETL Pipeline executed successfully");
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("ETL Pipeline failed: " + e.getMessage());
         }
     }
 }
