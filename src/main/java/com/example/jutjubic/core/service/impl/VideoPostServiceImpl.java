@@ -339,7 +339,6 @@ public class VideoPostServiceImpl implements VideoPostService {
     public void incrementViewCount(Long id) {
         videoPostRepository.incrementViewCount(id);
         
-        // Čuvanje individual view zapisa za ETL pipeline
         VideoViewEntity view = new VideoViewEntity(id, LocalDateTime.now());
         videoViewRepository.save(view);
     }

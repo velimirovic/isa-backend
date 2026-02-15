@@ -27,7 +27,7 @@ public class PopularVideosReportEntity {
     private Long videoId;
 
     @Column(name = "rank", nullable = false)
-    private Integer rank; // 1, 2, or 3
+    private Integer rank;
 
     @Column(name = "popularity_score", nullable = false)
     private Double popularityScore;

@@ -12,16 +12,9 @@ import java.util.List;
 @Repository
 public interface JpaVideoViewRepository extends JpaRepository<VideoViewEntity, Long> {
 
-    /**
-     * Pronalazi sve preglede videa u zadatom vremenskom periodu
-     */
     @Query("SELECT v FROM VideoViewEntity v WHERE v.viewedAt >= :startDate")
     List<VideoViewEntity> findViewsSince(@Param("startDate") LocalDateTime startDate);
 
-    /**
-     * Broji preglede za svaki video u poslednjih N dana
-     * Vraća listu: [videoId, day_diff, view_count]
-     */
     @Query(value = """
         SELECT 
             vv.video_id,
