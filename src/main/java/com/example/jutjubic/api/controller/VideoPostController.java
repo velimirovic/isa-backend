@@ -189,9 +189,6 @@ public class VideoPostController {
         }
     }
 
-    /**
-     * Vraća top 3 najpopularnija videa iz poslednjeg ETL izvršavanja
-     */
     @GetMapping("/api/video-posts/popular")
     public ResponseEntity<List<VideoResponseDTO>> getPopularVideos() {
         try {
@@ -204,9 +201,6 @@ public class VideoPostController {
         }
     }
 
-    /**
-     * Ručno pokretanje ETL pipeline-a (za testiranje/admin)
-     */
     @PostMapping("/api/video-posts/etl/run")
     public ResponseEntity<String> triggerETL() {
         try {

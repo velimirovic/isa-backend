@@ -27,7 +27,7 @@ public class VideoViewEntity {
     private LocalDateTime viewedAt;
 
     @Column(name = "user_email")
-    private String userEmail; // Opciono - za tracking ko je gledao
+    private String userEmail;
 
     public VideoViewEntity(Long videoId, LocalDateTime viewedAt) {
         this.videoId = videoId;

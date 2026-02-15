@@ -10,9 +10,6 @@ import java.util.List;
 @Repository
 public interface JpaPopularVideosReportRepository extends JpaRepository<PopularVideosReportEntity, Long> {
 
-    /**
-     * Pronalazi top 3 videa iz poslednjeg izvršenog ETL pipeline-a
-     */
     @Query("""
         SELECT p FROM PopularVideosReportEntity p 
         WHERE p.runDate = (
@@ -22,9 +19,6 @@ public interface JpaPopularVideosReportRepository extends JpaRepository<PopularV
         """)
     List<PopularVideosReportEntity> findLatestTopVideos();
 
-    /**
-     * Briše stare izveštaje (opciono - može da se koristi za cleanup)
-     */
     @Query("DELETE FROM PopularVideosReportEntity p WHERE p.runDate < :cutoffDate")
     void deleteOldReports(@org.springframework.data.repository.query.Param("cutoffDate") java.time.LocalDateTime cutoffDate);
 }

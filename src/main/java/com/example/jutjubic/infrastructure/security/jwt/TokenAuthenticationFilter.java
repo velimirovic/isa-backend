@@ -36,26 +36,17 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
-        String email;
-
-        // 1. Preuzimanje JWT tokena iz zahteva
+        String email = null;
         String authToken = tokenUtils.getToken(request);
 
         try {
             if (authToken != null) {
-
-                // 2. Citanje email-a iz tokena
                 email = tokenUtils.getEmailFromToken(authToken);
 
                 if (email != null) {
-
-                    // 3. Preuzimanje korisnika na osnovu email-a
                     UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                    // 4. Provera da li je token validan
                     if (tokenUtils.validateToken(authToken, userDetails.getUsername())) {
-
-                        // 5. Kreiraj autentifikaciju
                         UsernamePasswordAuthenticationToken authentication =
                                 new UsernamePasswordAuthenticationToken(
                                         userDetails,
@@ -64,11 +55,8 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                                 );
 
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                        // 6. Postavi autentifikaciju u SecurityContext
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                         
-                        // 7. Registruj aktivnost korisnika za monitoring
                         if (activeUsersMetrics != null) {
                             activeUsersMetrics.recordUserActivity(email);
                         }
@@ -80,7 +68,22 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             LOGGER.debug("JWT token je istekao!");
         }
 
-        // 7. Prosledi zahtev dalje u sledeci filter
+        if (email == null && activeUsersMetrics != null) {
+            String sessionId = getAnonymousIdentifier(request);
+            activeUsersMetrics.recordAnonymousActivity(sessionId);
+        }
+
         chain.doFilter(request, response);
+    }
+
+    private String getAnonymousIdentifier(HttpServletRequest request) {
+        String sessionId = request.getHeader("Cookie");
+        if (sessionId != null && !sessionId.isEmpty()) {
+            return sessionId;
+        }
+        
+        String userAgent = request.getHeader("User-Agent");
+        String remoteAddr = request.getRemoteAddr();
+        return (userAgent != null ? userAgent : "") + "_" + (remoteAddr != null ? remoteAddr : "unknown");
     }
 }

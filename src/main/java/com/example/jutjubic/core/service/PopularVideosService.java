@@ -32,9 +32,6 @@ public class PopularVideosService {
         this.videoPostService = videoPostService;
     }
 
-    /**
-     * Vraća top 3 najpopularnija videa iz poslednjeg ETL run-a
-     */
     public List<VideoResponseDTO> getTop3PopularVideos() {
         List<PopularVideosReportEntity> reports = reportRepository.findLatestTopVideos();
         List<VideoResponseDTO> result = new ArrayList<>();
@@ -45,10 +42,8 @@ public class PopularVideosService {
             if (videoOpt.isPresent()) {
                 VideoPostEntity video = videoOpt.get();
                 
-                // Samo ako je video published, dodaj ga u listu
                 if (video.getStatus() == VideoPostStatus.PUBLISHED) {
                     try {
-                        // Koristi metodu BEZ povećavanja view count-a
                         VideoResponseDTO dto = videoPostService.getVideoPostWithoutIncrementingViews(video.getDraftId());
                         result.add(dto);
                     } catch (Exception e) {
@@ -67,9 +62,6 @@ public class PopularVideosService {
         return result;
     }
 
-    /**
-     * Ručno pokretanje ETL pipeline-a (za testiranje/admin)
-     */
     @Transactional
     public void triggerETLPipeline(PopularVideosETLService etlService) {
         etlService.runPipelineManually();
