@@ -7,6 +7,7 @@ import com.example.jutjubic.core.domain.FilterType;
 import com.example.jutjubic.core.service.PopularVideosETLService;
 import com.example.jutjubic.core.service.PopularVideosService;
 import com.example.jutjubic.core.service.VideoPostService;
+import com.example.jutjubic.core.service.impl.ThumbnailCompressionScheduler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ public class VideoPostController {
     final VideoPostService videoPostService;
     final PopularVideosService popularVideosService;
     final PopularVideosETLService popularVideosETLService;
+    final ThumbnailCompressionScheduler thumbnailCompressionScheduler;
 
     @PostMapping("/api/video-posts/draft")
     public ResponseEntity<VideoPostDraftDTO> startDraft(
@@ -198,6 +200,18 @@ public class VideoPostController {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(List.of());
+        }
+    }
+
+    @PostMapping("/api/video-posts/thumbnails/compress")
+    public ResponseEntity<String> triggerThumbnailCompression() {
+        try {
+            thumbnailCompressionScheduler.compressOldThumbnails();
+            return ResponseEntity.ok("Thumbnail compression executed successfully");
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Thumbnail compression failed: " + e.getMessage());
         }
     }
 
