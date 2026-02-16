@@ -5,6 +5,7 @@ import com.example.jutjubic.infrastructure.entity.VideoViewEntity;
 import com.example.jutjubic.infrastructure.repository.JpaPopularVideosReportRepository;
 import com.example.jutjubic.infrastructure.repository.JpaVideoViewRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,9 @@ public class PopularVideosETLService {
     private final JpaVideoViewRepository videoViewRepository;
     private final JpaPopularVideosReportRepository reportRepository;
 
+    @Value("${app.scheduler.enabled:true}")
+    private boolean schedulerEnabled;
+
     public PopularVideosETLService(
             JpaVideoViewRepository videoViewRepository,
             JpaPopularVideosReportRepository reportRepository) {
@@ -31,6 +35,10 @@ public class PopularVideosETLService {
     @Scheduled(cron = "0 0 2 * * *")
     @Transactional
     public void runDailyPopularityPipeline() {
+        if (!schedulerEnabled) {
+            log.info("Scheduler disabled on this replica, skipping ETL pipeline");
+            return;
+        }
         log.info("🚀 Starting ETL Pipeline for Popular Videos");
         LocalDateTime startTime = LocalDateTime.now();
 
