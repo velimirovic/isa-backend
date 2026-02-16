@@ -34,12 +34,7 @@ public interface JpaVideoPostRepository extends JpaRepository<VideoPostEntity, L
     """)
     VideoPostEntity findDraftByAuthor(UserEntity author);
 
-    @Modifying
-//    @Query("""
-//        UPDATE VideoPostEntity v
-//        SET v.viewCount = v.viewCount + 1
-//        WHERE v.id = :id
-//    """)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE VideoPostEntity v
         SET v.viewCount = v.viewCount + 1
