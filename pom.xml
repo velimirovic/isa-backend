@@ -200,7 +200,7 @@
                 <version>0.6.1</version>
                 <configuration>
                     <protocArtifact>
-                        com.google.protobuf:protoc:3.25.1:exe:windows-x86_64
+                        com.google.protobuf:protoc:3.25.1:exe:${os.detected.classifier}
                     </protocArtifact>
                 </configuration>
                 <executions>

@@ -1,6 +1,26 @@
 version: '3.8'
 
 services:
+
+  # ──────────── PostgreSQL ────────────
+  postgres:
+    image: postgres:16
+    container_name: jutjubic-postgres
+    environment:
+      POSTGRES_DB: jutjubic-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────── RabbitMQ ────────────
   rabbitmq:
     image: rabbitmq:3-management
     container_name: jutjubic-rabbitmq
@@ -18,5 +38,77 @@ services:
       timeout: 5s
       retries: 5
 
+  # ──────────── App Replika 1 ────────────
+  app-1:
+    build: .
+    container_name: jutjubic-app-1
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: root
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASS: guest
+      SCHEDULER_ENABLED: "true"
+    volumes:
+      - shared_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  # ──────────── App Replika 2 ────────────
+  app-2:
+    build: .
+    container_name: jutjubic-app-2
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: root
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASS: guest
+      SCHEDULER_ENABLED: "false"
+    volumes:
+      - shared_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  # ──────────── NGINX Load Balancer ────────────
+  nginx:
+    image: nginx:alpine
+    container_name: jutjubic-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      app-1:
+        condition: service_healthy
+      app-2:
+        condition: service_healthy
+
 volumes:
+  pg_data:
   rabbitmq_data:
+  shared_uploads:
