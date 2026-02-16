@@ -3,6 +3,7 @@ package com.example.jutjubic.api.controller;
 import com.example.jutjubic.api.dto.comment.CommentResponseDTO;
 import com.example.jutjubic.api.dto.comment.CreateCommentDTO;
 import com.example.jutjubic.api.dto.like.LikeResponseDTO;
+import com.example.jutjubic.core.service.CommentRateLimiterService;
 import com.example.jutjubic.core.service.CommentService;
 import com.example.jutjubic.core.service.LikeService;
 import jakarta.validation.Valid;
@@ -24,7 +25,8 @@ import org.springframework.web.bind.annotation.*;
 public class InteractionController {
 
     private final CommentService commentService;
-    private final LikeService likeService;  // Dodaj u konstruktor
+    private final LikeService likeService;
+    private final CommentRateLimiterService commentRateLimiterService;
 
     /**
      * Kreiranje novog komentara
@@ -43,12 +45,26 @@ public class InteractionController {
             @Valid @RequestBody CreateCommentDTO commentDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
 
+        String userEmail = userDetails.getUsername();
+
+        // Provera rate limiter-a: max 60 komentara po korisniku na sat
+        if (!commentRateLimiterService.isAllowed(userEmail)) {
+            int remaining = commentRateLimiterService.getRemainingComments(userEmail);
+            return ResponseEntity
+                    .status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body("Prekoracili ste limit od 60 komentara po satu. " +
+                            "Preostalo komentara: " + remaining + ". Pokusajte ponovo kasnije.");
+        }
+
         try {
             CommentResponseDTO comment = commentService.createComment(
                     videoId,
                     commentDTO,
-                    userDetails.getUsername()  // email iz JWT tokena
+                    userEmail  // email iz JWT tokena
             );
+
+            // Registruj komentar u rate limiter nakon uspesnog kreiranja
+            commentRateLimiterService.registerComment(userEmail);
 
             return ResponseEntity
                     .status(HttpStatus.CREATED)
