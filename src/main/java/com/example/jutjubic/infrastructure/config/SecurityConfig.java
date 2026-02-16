@@ -72,6 +72,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/interactions/**").permitAll() // Pristup svima, ali @PreAuthorize proverava autentifikaciju
                 .requestMatchers("/video-chat/**", "/video-chat").permitAll()
                 .requestMatchers("/api/benchmark/**").permitAll()
+                .requestMatchers("/api/watch-party/**").permitAll()
                 .anyRequest().authenticated()  // Sve ostalo zahteva autentifikaciju
         );
 

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Watch Party</title>
+  <link rel="stylesheet" href="/watch-party.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="bg"></div>
+  <main class="page">
+    <header class="hero">
+      <div class="badge">Real-time</div>
+      <h1>Watch Party</h1>
+      <p>Launch a room, drop a video draft id, and everyone opens the same video page instantly.</p>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Create Room</h2>
+        <p class="muted">Requires auth token if your backend enforces it. Paste JWT if needed.</p>
+        <label>Auth token (optional)
+          <input id="token" type="password" placeholder="Bearer token" />
+        </label>
+        <button id="createRoom">Create Room</button>
+        <div class="result">
+          <div class="row"><span>Room code</span><strong id="roomCode">—</strong></div>
+          <div class="row"><span>Share link</span><a id="shareLink" href="#" target="_blank">—</a></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Join Room</h2>
+        <p class="muted">Join by code and wait. When the host starts a video, this client opens it.</p>
+        <label>Room code
+          <input id="joinCode" type="text" placeholder="e.g. A1B2C3D4" />
+        </label>
+        <button id="joinRoom">Join</button>
+        <div class="status" id="joinStatus">Not connected.</div>
+      </div>
+
+      <div class="card">
+        <h2>Host Controls</h2>
+        <p class="muted">Only the host should use this. It broadcasts the video to all members.</p>
+        <label>Video draft id
+          <input id="videoDraftId" type="text" placeholder="Draft id" />
+        </label>
+        <label>Video title
+          <input id="videoTitle" type="text" placeholder="Optional" />
+        </label>
+        <button id="playVideo">Play For Room</button>
+        <button class="ghost" id="closeRoom">Close Room</button>
+        <div class="status" id="hostStatus">Waiting for room.</div>
+      </div>
+
+      <div class="card">
+        <h2>Live Feed</h2>
+        <div id="feed" class="feed"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+  <script src="/watch-party.js"></script>
+</body>
+</html>
