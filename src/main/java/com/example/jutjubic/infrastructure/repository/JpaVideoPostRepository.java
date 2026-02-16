@@ -102,4 +102,19 @@ public interface JpaVideoPostRepository extends JpaRepository<VideoPostEntity, L
             @Param("maxLng") double maxLng,
             @Param("limit") int limit
     );
+    @Query("""
+    SELECT v FROM VideoPostEntity v
+    WHERE (v.thumbnailCompressed = false OR v.thumbnailCompressed IS NULL)
+    AND v.createdAt < :date
+    AND v.thumbnailPath IS NOT NULL
+    """)
+    List<VideoPostEntity> findUncompressedOlderThan(@Param("date") LocalDateTime date);
+
+    @Modifying
+    @Query("""
+    UPDATE VideoPostEntity v
+    SET v.thumbnailPath = :thumbnailPath, v.thumbnailCompressed = true
+    WHERE v.id = :id
+    """)
+    void markThumbnailCompressed(@Param("id") long id, @Param("thumbnailPath") String thumbnailPath);
 }

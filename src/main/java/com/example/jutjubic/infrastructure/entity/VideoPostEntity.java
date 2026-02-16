@@ -72,6 +72,9 @@ public class VideoPostEntity {
     @Column(name="duration_seconds")
     private Integer durationSeconds;
 
+    @Column(name = "thumbnail_compressed")
+    private Boolean thumbnailCompressed = false;
+
     @Version
     private Long version;
 
