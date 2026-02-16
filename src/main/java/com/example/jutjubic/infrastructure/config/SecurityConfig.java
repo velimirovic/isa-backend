@@ -70,6 +70,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/video-posts/{id}/thumbnail").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/*/profile").permitAll() // Profili korisnika - dostupno svima
                 .requestMatchers("/api/interactions/**").permitAll() // Pristup svima, ali @PreAuthorize proverava autentifikaciju
+                .requestMatchers("/video-chat/**", "/video-chat").permitAll()
                 .anyRequest().authenticated()  // Sve ostalo zahteva autentifikaciju
         );
 
