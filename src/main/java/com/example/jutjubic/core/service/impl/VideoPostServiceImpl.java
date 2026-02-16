@@ -76,7 +76,7 @@ public class VideoPostServiceImpl implements VideoPostService {
             LikeService likeService,
             VideoMapService videoMapService,
             JpaVideoViewRepository videoViewRepository,
-            RabbitTemplate rabbitTemplate) {
+            RabbitTemplate rabbitTemplate,
             UploadEventProducer uploadEventProducer) {
         this.videoPostRepository = VideoPostRepository;
         this.storingService = storingService;
