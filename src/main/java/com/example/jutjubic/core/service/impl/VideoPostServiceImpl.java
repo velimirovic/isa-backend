@@ -1,6 +1,7 @@
 package com.example.jutjubic.core.service.impl;
 
 import com.example.jutjubic.api.dto.videopost.TranscodingMessage;
+import com.example.jutjubic.api.dto.videopost.UploadEventDTO;
 import com.example.jutjubic.api.dto.videopost.VideoPostDraftDTO;
 import com.example.jutjubic.api.dto.videopost.VideoResponseDTO;
 import com.example.jutjubic.core.domain.FilterType;
@@ -14,6 +15,7 @@ import com.example.jutjubic.infrastructure.entity.TagEntity;
 import com.example.jutjubic.infrastructure.entity.UserEntity;
 import com.example.jutjubic.infrastructure.entity.VideoPostEntity;
 import com.example.jutjubic.infrastructure.entity.VideoViewEntity;
+import com.example.jutjubic.infrastructure.messaging.UploadEventProducer;
 import com.example.jutjubic.infrastructure.repository.JpaTagRepository;
 import com.example.jutjubic.infrastructure.repository.JpaUserRepository;
 import com.example.jutjubic.infrastructure.repository.JpaVideoPostRepository;
@@ -63,6 +65,7 @@ public class VideoPostServiceImpl implements VideoPostService {
 
     @Value("${transcoding.bitrate}")
     private String bitrate;
+    private final UploadEventProducer uploadEventProducer;
 
     public VideoPostServiceImpl(
             JpaVideoPostRepository VideoPostRepository,
@@ -74,6 +77,7 @@ public class VideoPostServiceImpl implements VideoPostService {
             VideoMapService videoMapService,
             JpaVideoViewRepository videoViewRepository,
             RabbitTemplate rabbitTemplate) {
+            UploadEventProducer uploadEventProducer) {
         this.videoPostRepository = VideoPostRepository;
         this.storingService = storingService;
         this.userRepository = userRepository;
@@ -83,6 +87,7 @@ public class VideoPostServiceImpl implements VideoPostService {
         this.videoMapService = videoMapService;
         this.videoViewRepository = videoViewRepository;
         this.rabbitTemplate = rabbitTemplate;
+        this.uploadEventProducer = uploadEventProducer;
     }
 
     @Transactional
@@ -263,6 +268,27 @@ public class VideoPostServiceImpl implements VideoPostService {
             videoMapService.invalidateTileCacheForLocation(videoPost.getLatitude(), videoPost.getLongitude());
         } catch (Exception e) {
             log.error("failed to invalidate tile cache", e);
+        }
+
+        
+        try {
+            UploadEventDTO event = UploadEventDTO.builder()
+                    .draftId(videoPost.getDraftId())
+                    .title(videoPost.getTitle())
+                    .description(videoPost.getDescription())
+                    .authorUsername(videoPost.getAuthor().getUsername())
+                    .authorEmail(videoPost.getAuthor().getEmail())
+                    .fileSizeBytes(104857600L) // Default 100MB (actual size not stored in entity)
+                    .durationSeconds(videoPost.getDurationSeconds() != null ? videoPost.getDurationSeconds() : 0)
+                    .resolution("1920x1080") // Default resolution (not stored in entity)
+                    .uploadTimestamp(videoPost.getCreatedAt().toString())
+                    .build();
+
+            uploadEventProducer.sendJsonMessage(event);
+            uploadEventProducer.sendProtobufMessage(event);
+            log.info("Sent upload event messages for video: {}", videoPost.getDraftId());
+        } catch (Exception e) {
+            log.error("Failed to send upload event messages", e);        
         }
 
         return mapVideoPostDTO(videoPost);
