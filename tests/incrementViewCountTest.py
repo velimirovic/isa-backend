@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
 BASE_URL = "http://localhost:8080/api/video-posts"
-VIDEO_DRAFT_ID = "8888389c-5664-417d-82b8-9af5ea391c31"
+VIDEO_DRAFT_ID = "b0754264-80d4-4ff5-8cff-8643ea1c73c1"
 
 NUMBER_OF_REQUESTS = 100
 MAX_WORKERS = 10

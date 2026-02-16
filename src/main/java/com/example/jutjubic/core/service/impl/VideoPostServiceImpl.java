@@ -8,6 +8,7 @@ import com.example.jutjubic.core.service.FileStoringService;
 import com.example.jutjubic.core.service.LikeService;
 import com.example.jutjubic.core.service.VideoMapService;
 import com.example.jutjubic.core.service.VideoPostService;
+import com.example.jutjubic.core.service.ViewCountService;
 import com.example.jutjubic.core.domain.VideoPostStatus;
 import com.example.jutjubic.infrastructure.entity.TagEntity;
 import com.example.jutjubic.infrastructure.entity.UserEntity;
@@ -49,6 +50,7 @@ public class VideoPostServiceImpl implements VideoPostService {
     private final VideoMapService videoMapService;
     private final JpaVideoViewRepository videoViewRepository;
     private final UploadEventProducer uploadEventProducer;
+    private final ViewCountService viewCountService;
 
     public VideoPostServiceImpl(
             JpaVideoPostRepository VideoPostRepository,
@@ -59,7 +61,8 @@ public class VideoPostServiceImpl implements VideoPostService {
             LikeService likeService,
             VideoMapService videoMapService,
             JpaVideoViewRepository videoViewRepository,
-            UploadEventProducer uploadEventProducer) {
+            UploadEventProducer uploadEventProducer,
+            ViewCountService viewCountService) {
         this.videoPostRepository = VideoPostRepository;
         this.storingService = storingService;
         this.userRepository = userRepository;
@@ -69,6 +72,7 @@ public class VideoPostServiceImpl implements VideoPostService {
         this.videoMapService = videoMapService;
         this.videoViewRepository = videoViewRepository;
         this.uploadEventProducer = uploadEventProducer;
+        this.viewCountService = viewCountService;
     }
 
     @Transactional
@@ -268,12 +272,17 @@ public class VideoPostServiceImpl implements VideoPostService {
         // Don't block access to scheduled videos - let the frontend handle countdown
         // This allows users to see title, description, author before the video starts
 
-        this.incrementViewCount(videoPost.getId());
+        Long videoId = videoPost.getId();
+        
+        // Increment view count in a separate transaction (REQUIRES_NEW)
+        // This avoids @Version conflicts with the current transaction
+        viewCountService.incrementViewCount(videoId);
 
-        var dto = mapVideoPostDTO(videoPost);
-        dto.setViewCount(dto.getViewCount()+1);
+        // Reload entity to get fresh viewCount after increment
+        videoPost = videoPostRepository.findById(videoId)
+                .orElseThrow(() -> new RuntimeException("Post not found after increment"));
 
-        return dto;
+        return mapVideoPostDTO(videoPost);
     }
 
     @Override
@@ -361,12 +370,14 @@ public class VideoPostServiceImpl implements VideoPostService {
         videoPost.setTags(tags);
     }
 
+    /**
+     * @deprecated Use ViewCountService.incrementViewCount() instead.
+     * This method is kept for backwards compatibility but delegates to ViewCountService.
+     */
+    @Deprecated
     @Transactional
     public void incrementViewCount(Long id) {
-        videoPostRepository.incrementViewCount(id);
-        
-        VideoViewEntity view = new VideoViewEntity(id, LocalDateTime.now());
-        videoViewRepository.save(view);
+        viewCountService.incrementViewCount(id);
     }
 
 
