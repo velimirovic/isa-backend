@@ -1,0 +1,193 @@
+:root {
+  --bg: #0c0f14;
+  --surface: #151a23;
+  --surface-2: #1b2230;
+  --text: #f5f7fb;
+  --muted: #aab3c2;
+  --accent: #31d7a9;
+  --accent-2: #f2c14e;
+  --danger: #ff6b6b;
+  --shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(49, 215, 169, 0.25), transparent 45%),
+    radial-gradient(circle at 90% 20%, rgba(242, 193, 78, 0.25), transparent 40%),
+    linear-gradient(160deg, #0b0f15, #0f131c 50%, #0b0f15 90%);
+  z-index: -1;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+.hero {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.hero h1 {
+  font-size: clamp(32px, 5vw, 56px);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.hero p {
+  max-width: 640px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  background: rgba(49, 215, 169, 0.15);
+  color: var(--accent);
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 12px;
+  width: fit-content;
+}
+
+.grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 12px;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+input {
+  background: var(--surface-2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+button {
+  background: var(--accent);
+  border: none;
+  color: #06221a;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 10px 20px rgba(49, 215, 169, 0.25);
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button.ghost {
+  background: transparent;
+  color: var(--accent-2);
+  border: 1px solid rgba(242, 193, 78, 0.4);
+  box-shadow: none;
+}
+
+button.ghost:hover {
+  box-shadow: 0 8px 18px rgba(242, 193, 78, 0.2);
+}
+
+.result {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.row a {
+  color: var(--accent-2);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.status {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.feed {
+  display: grid;
+  gap: 10px;
+  min-height: 120px;
+}
+
+.feed-item {
+  border-left: 3px solid var(--accent);
+  padding: 8px 10px;
+  background: rgba(49, 215, 169, 0.08);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.feed-item strong {
+  color: var(--text);
+}
+
+@media (max-width: 700px) {
+  .page {
+    padding: 32px 18px 60px;
+  }
+}
