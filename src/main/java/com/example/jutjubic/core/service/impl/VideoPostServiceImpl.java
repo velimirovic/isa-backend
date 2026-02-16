@@ -1,5 +1,6 @@
 package com.example.jutjubic.core.service.impl;
 
+import com.example.jutjubic.api.dto.videopost.TranscodingMessage;
 import com.example.jutjubic.api.dto.videopost.VideoPostDraftDTO;
 import com.example.jutjubic.api.dto.videopost.VideoResponseDTO;
 import com.example.jutjubic.core.domain.FilterType;
@@ -8,6 +9,7 @@ import com.example.jutjubic.core.service.LikeService;
 import com.example.jutjubic.core.service.VideoMapService;
 import com.example.jutjubic.core.service.VideoPostService;
 import com.example.jutjubic.core.domain.VideoPostStatus;
+import com.example.jutjubic.infrastructure.config.RabbitMQConfig;
 import com.example.jutjubic.infrastructure.entity.TagEntity;
 import com.example.jutjubic.infrastructure.entity.UserEntity;
 import com.example.jutjubic.infrastructure.entity.VideoPostEntity;
@@ -17,6 +19,8 @@ import com.example.jutjubic.infrastructure.repository.JpaUserRepository;
 import com.example.jutjubic.infrastructure.repository.JpaVideoPostRepository;
 import com.example.jutjubic.infrastructure.repository.JpaVideoViewRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
@@ -27,6 +31,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -46,6 +53,16 @@ public class VideoPostServiceImpl implements VideoPostService {
     private final LikeService likeService;
     private final VideoMapService videoMapService;
     private final JpaVideoViewRepository videoViewRepository;
+    private final RabbitTemplate rabbitTemplate;
+
+    @Value("${transcoding.output-resolution}")
+    private String outputResolution;
+
+    @Value("${transcoding.codec}")
+    private String codec;
+
+    @Value("${transcoding.bitrate}")
+    private String bitrate;
 
     public VideoPostServiceImpl(
             JpaVideoPostRepository VideoPostRepository,
@@ -55,7 +72,8 @@ public class VideoPostServiceImpl implements VideoPostService {
             JpaTagRepository tagRepository,
             LikeService likeService,
             VideoMapService videoMapService,
-            JpaVideoViewRepository videoViewRepository) {
+            JpaVideoViewRepository videoViewRepository,
+            RabbitTemplate rabbitTemplate) {
         this.videoPostRepository = VideoPostRepository;
         this.storingService = storingService;
         this.userRepository = userRepository;
@@ -64,6 +82,7 @@ public class VideoPostServiceImpl implements VideoPostService {
         this.likeService = likeService;
         this.videoMapService = videoMapService;
         this.videoViewRepository = videoViewRepository;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Transactional
@@ -214,10 +233,30 @@ public class VideoPostServiceImpl implements VideoPostService {
         if (!result.isEmpty())
             throw new RuntimeException(result);
 
-        videoPost.setStatus(VideoPostStatus.PUBLISHED);
+        videoPost.setStatus(VideoPostStatus.TRANSCODING);
         videoPost.setCreatedAt(LocalDateTime.now());
 
         videoPostRepository.save(videoPost);
+
+        TranscodingMessage message = new TranscodingMessage(
+                videoPost.getVideoPath(),
+                videoPost.getDraftId(),
+                outputResolution,
+                codec,
+                bitrate
+        );
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                rabbitTemplate.convertAndSend(
+                        RabbitMQConfig.EXCHANGE_NAME,
+                        RabbitMQConfig.ROUTING_KEY,
+                        message
+                );
+                log.info("Sent transcoding message to RabbitMQ for draftId: {}", draftId);
+            }
+        });
 
         try {
             log.info("invalidating tile cache for {} {}", videoPost.getLatitude(), videoPost.getLongitude());
