@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option java_package = "com.example.jutjubicconsumer.messaging.proto";
+option java_outer_classname = "UploadEventProto";
+
+message UploadEvent {
+  string draft_id = 1;
+  string title = 2;
+  string description = 3;
+  string author_username = 4;
+  string author_email = 5;
+  int64 file_size_bytes = 6;
+  int32 duration_seconds = 7;
+  string resolution = 8;
+  string upload_timestamp = 9;
+}
